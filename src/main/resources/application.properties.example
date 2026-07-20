@@ -1,0 +1,21 @@
+spring.application.name=movie-reservation
+
+# Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/movie_db
+spring.datasource.username=YOUR_USERNAME
+spring.datasource.password=YOUR_PASSWORD
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JDBC
+spring.jdbc.template.fetch-size=50
+
+# SQL Initialization
+spring.sql.init.mode=always
+spring.sql.init.schema-locations=classpath:schema.sql
+
+# JWT
+jwt.secret=YOUR_JWT_SECRET_HERE_MIN_32_CHARS
+jwt.expiration=86400000
+
+# Server
+server.port=8080
