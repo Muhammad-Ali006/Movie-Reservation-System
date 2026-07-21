@@ -180,6 +180,22 @@ Auto-seeded on startup:
 | reservation_id| BIGINT     | FK → reservations(id)   |
 | seat_id       | BIGINT     | FK → seats(id)          |
 
+### actors
+| Column    | Type         | Constraint        |
+|-----------|-------------|-------------------|
+| id        | BIGSERIAL   | PRIMARY KEY       |
+| name      | VARCHAR(255)| NOT NULL          |
+| bio       | TEXT        |                   |
+| photo_url | VARCHAR(500)|                   |
+
+### movie_cast
+| Column     | Type       | Constraint              |
+|-----------|-----------|-------------------------|
+| id        | BIGSERIAL  | PRIMARY KEY             |
+| movie_id  | BIGINT     | FK → movies(id)         |
+| actor_id  | BIGINT     | FK → actors(id)         |
+| role_name | VARCHAR(255)|                       |
+
 ---
 
 ## API Endpoints
@@ -192,15 +208,37 @@ Auto-seeded on startup:
 | POST   | /api/auth/login       | Public         | Login, returns JWT   |
 | GET    | /api/auth/me          | Authenticated  | Get current user     |
 
-### Planned
+### Genres
+| Method | Endpoint              | Access         | Description          |
+|--------|-----------------------|----------------|----------------------|
+| GET    | /api/genres           | Public         | List all genres      |
+| POST   | /api/admin/genres     | ADMIN          | Create genre         |
+| PUT    | /api/admin/genres/{id}| ADMIN          | Update genre         |
+| DELETE | /api/admin/genres/{id}| ADMIN          | Delete genre         |
 
+### Movies
+| Method | Endpoint                   | Access         | Description            |
+|--------|----------------------------|----------------|------------------------|
+| GET    | /api/movies                | Public         | List all movies        |
+| GET    | /api/movies/{id}           | Public         | Get movie details + cast |
+| POST   | /api/admin/movies          | ADMIN          | Create movie           |
+| PUT    | /api/admin/movies/{id}     | ADMIN          | Update movie           |
+| DELETE | /api/admin/movies/{id}     | ADMIN          | Delete movie           |
+| POST   | /api/admin/movies/{id}/poster | ADMIN       | Upload movie poster (multipart) |
+| POST   | /api/admin/movies/{movieId}/cast | ADMIN    | Add actor to movie cast |
+| DELETE | /api/admin/movies/{movieId}/cast/{castId} | ADMIN | Remove cast member |
+
+### Actors
+| Method | Endpoint                | Access         | Description          |
+|--------|-------------------------|----------------|----------------------|
+| GET    | /api/actors             | Public         | List all actors      |
+| POST   | /api/admin/actors       | ADMIN          | Create actor         |
+| PUT    | /api/admin/actors/{id}  | ADMIN          | Update actor         |
+| DELETE | /api/admin/actors/{id}  | ADMIN          | Delete actor         |
+
+### Planned
 | Method | Endpoint                      | Access        | Description               |
 |--------|-------------------------------|---------------|---------------------------|
-| GET    | /api/genres                   | Public        | List all genres           |
-| POST   | /api/admin/genres             | ADMIN         | Create genre              |
-| GET    | /api/movies                   | Public        | List all movies           |
-| GET    | /api/movies/{id}              | Public        | Get movie details         |
-| POST   | /api/admin/movies             | ADMIN         | Create movie              |
 | GET    | /api/showtimes?movieId={id}   | Public        | List showtimes by movie   |
 | POST   | /api/admin/showtimes          | ADMIN         | Create showtime           |
 | GET    | /api/showtimes/{id}/seats     | Public        | Get seat layout           |
@@ -227,4 +265,4 @@ Backend (Spring Boot 4.0.7)
 
 ## Project Status
 
-**Work in progress.** Auth flow is complete. Movie, genre, showtime, seat selection, and reservation features are planned.
+**Work in progress.** Auth flow, movie CRUD with poster upload, genre CRUD, and actor/cast management are complete. Showtime, seat selection, and reservation features are planned.

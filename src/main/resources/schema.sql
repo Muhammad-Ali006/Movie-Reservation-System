@@ -57,3 +57,17 @@ CREATE TABLE IF NOT EXISTS reservation_seats (
     reservation_id BIGINT REFERENCES reservations(id),
     seat_id BIGINT REFERENCES seats(id)
 );
+
+CREATE TABLE IF NOT EXISTS actors (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    bio TEXT,
+    photo_url VARCHAR(500)
+);
+
+CREATE TABLE IF NOT EXISTS movie_cast (
+    id BIGSERIAL PRIMARY KEY,
+    movie_id BIGINT REFERENCES movies(id),
+    actor_id BIGINT REFERENCES actors(id),
+    role_name VARCHAR(255)
+);
