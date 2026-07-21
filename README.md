@@ -1,6 +1,31 @@
 # Movie Reservation System
 
-A fullstack movie reservation platform built with Spring Boot, React, JDBC, and PostgreSQL.
+A fullstack movie reservation platform built with Spring Boot 4.0.7, React 19, JDBC, and PostgreSQL.
+
+---
+
+## Tech Stack
+
+### Backend
+| Technology        | Version     |
+|-------------------|-------------|
+| Spring Boot       | 4.0.7       |
+| Java              | 17          |
+| JDBC (JdbcTemplate)| —           |
+| PostgreSQL        | —           |
+| JJWT              | 0.12.6      |
+| Spring Security   | —           |
+| Spring Validation | —           |
+| Maven             | —           |
+
+### Frontend
+| Technology        | Version     |
+|-------------------|-------------|
+| React             | 19.2.7      |
+| Vite              | 8.1.1       |
+| Tailwind CSS      | 4.3.3       |
+| React Router      | 7.18.1      |
+| Axios             | 1.18.1      |
 
 ---
 
@@ -22,7 +47,8 @@ A fullstack movie reservation platform built with Spring Boot, React, JDBC, and 
    ```sql
    CREATE DATABASE movie_db;
    ```
-4. Run the application:
+4. Copy `src/main/resources/application.properties.example` to `application.properties` and update credentials
+5. Run the application:
    ```
    MovieReservationApplication.java → Run
    ```
@@ -49,7 +75,36 @@ npm run dev
 
 ---
 
+## What's Implemented
+
+### Authentication & Security
+- **JWT authentication** — tokens generated on login, validated on every request via `JwtAuthFilter` (OncePerRequestFilter)
+- **Stateless sessions** — no HTTP session, every request authenticated via Bearer token
+- **CORS** — configured to allow `http://localhost:5173` (Vite dev server)
+- **Role-based access control** — `ROLE_USER` for regular users, `ROLE_ADMIN` for admin endpoints (`/api/admin/**`)
+- **Password encryption** — BCrypt via Spring Security `PasswordEncoder`
+
+### Backend Architecture
+- **Layered pattern** — `controller → service → repository (JdbcTemplate)` with manual `RowMapper`
+- **Global exception handler** — returns structured JSON errors:
+  - `404` — `ResourceNotFoundException`
+  - `401` — `UnauthorizedException`
+  - `400` — `IllegalArgumentException`
+  - `500` — generic fallback
+- **Data seeder** — auto-creates admin account on startup (`admin / admin123`)
+
+### Frontend
+- **Axios client** (`utils/api.js`) — centralized API client with `baseURL: /api`
+- **Auto token injection** — request interceptor attaches `Authorization: Bearer <token>` from localStorage
+- **Auto logout on 401** — response interceptor clears token and redirects to `/login`
+- **Login/Signup pages** — forms wired to backend endpoints
+- **Navbar** — dynamic UI showing Login/Signup when logged out, Logout + Admin link (for admin role) when logged in
+
+---
+
 ## Default Admin Account
+
+Auto-seeded on startup:
 
 - **Username:** admin
 - **Password:** admin123
@@ -129,8 +184,47 @@ npm run dev
 
 ## API Endpoints
 
+### Auth
+
 | Method | Endpoint              | Access         | Description          |
 |--------|-----------------------|----------------|----------------------|
 | POST   | /api/auth/signup      | Public         | Register new user    |
 | POST   | /api/auth/login       | Public         | Login, returns JWT   |
 | GET    | /api/auth/me          | Authenticated  | Get current user     |
+
+### Planned
+
+| Method | Endpoint                      | Access        | Description               |
+|--------|-------------------------------|---------------|---------------------------|
+| GET    | /api/genres                   | Public        | List all genres           |
+| POST   | /api/admin/genres             | ADMIN         | Create genre              |
+| GET    | /api/movies                   | Public        | List all movies           |
+| GET    | /api/movies/{id}              | Public        | Get movie details         |
+| POST   | /api/admin/movies             | ADMIN         | Create movie              |
+| GET    | /api/showtimes?movieId={id}   | Public        | List showtimes by movie   |
+| POST   | /api/admin/showtimes          | ADMIN         | Create showtime           |
+| GET    | /api/showtimes/{id}/seats     | Public        | Get seat layout           |
+| POST   | /api/reservations             | Authenticated | Create reservation        |
+| GET    | /api/reservations/my          | Authenticated | Get user's reservations   |
+| DELETE | /api/reservations/{id}        | Authenticated | Cancel reservation        |
+
+---
+
+## Architecture
+
+```
+Frontend (React 19 + Vite 8)
+  └─ axios instance (utils/api.js)
+       └─ baseURL: /api
+            └─ Vite proxy → http://localhost:8080
+
+Backend (Spring Boot 4.0.7)
+  └─ SecurityConfig (stateless, CORS, role-based)
+       └─ JwtAuthFilter (extracts/validates Bearer token)
+            └─ Controller → Service → Repository (JdbcTemplate)
+                 └─ PostgreSQL
+```
+
+## Project Status
+
+**Work in progress.** Auth flow is complete. Movie, genre, showtime, seat selection, and reservation features are planned.
