@@ -1,4 +1,4 @@
-# Movie Reservation System
+cd # Movie Reservation System
 
 A fullstack movie reservation platform built with Spring Boot 4.0.7, React 19, JDBC, and PostgreSQL.
 
@@ -99,6 +99,13 @@ npm run dev
 - **Auto logout on 401** — response interceptor clears token and redirects to `/login`
 - **Login/Signup pages** — forms wired to backend endpoints
 - **Navbar** — dynamic UI showing Login/Signup when logged out, Logout + Admin link (for admin role) when logged in
+- **Protected routes** — `ProtectedRoute` component redirects unauthenticated users to `/login`
+- **Admin routes** — `AdminRoute` component restricts access to users with `ADMIN` role
+- **Auth-aware redirects** — Login/Signup pages redirect to `/` if already authenticated
+- **Admin dashboard** — management hub with links to genre, movie, and actor pages
+- **AdminGenrePage** — list all genres, create/edit/delete with inline form
+- **AdminMoviePage** — list all movies with genre and duration, edit/delete with confirmation
+- **AdminMovieForm** — create/edit movie form, poster upload with preview, cast management (add/remove actors with role names)
 
 ---
 
@@ -265,4 +272,4 @@ Backend (Spring Boot 4.0.7)
 
 ## Project Status
 
-**Work in progress.** Auth flow, movie CRUD with poster upload, genre CRUD, and actor/cast management are complete. Showtime, seat selection, and reservation features are planned.
+**Work in progress.** Auth flow, movie CRUD with poster upload, genre CRUD, actor/cast management, and all admin CRUD frontend pages are complete. Public movie listing and detail pages are next (Friday Week 1). Showtime, seat selection, and reservation features are planned for Weeks 2-3.
