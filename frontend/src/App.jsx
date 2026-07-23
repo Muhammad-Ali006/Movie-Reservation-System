@@ -5,6 +5,8 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminGenrePage from './pages/AdminGenrePage'
+import AdminMoviePage from './pages/AdminMoviePage'
+import AdminMovieForm from './pages/AdminMovieForm'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -38,6 +40,30 @@ function App() {
             element={
               <AdminRoute>
                 <AdminGenrePage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/movies"
+            element={
+              <AdminRoute>
+                <AdminMoviePage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/movies/new"
+            element={
+              <AdminRoute>
+                <AdminMovieForm />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/movies/:id/edit"
+            element={
+              <AdminRoute>
+                <AdminMovieForm />
               </AdminRoute>
             }
           />
