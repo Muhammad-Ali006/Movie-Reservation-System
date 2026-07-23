@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminGenrePage from './pages/AdminGenrePage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -29,6 +30,14 @@ function App() {
             element={
               <AdminRoute>
                 <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/genres"
+            element={
+              <AdminRoute>
+                <AdminGenrePage />
               </AdminRoute>
             }
           />
