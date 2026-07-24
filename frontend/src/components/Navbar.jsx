@@ -20,6 +20,9 @@ function Navbar() {
           </Link>
 
           <div className="flex items-center gap-4">
+            <Link to="/movies" className="text-gray-700 hover:text-blue-600">
+              Movies
+            </Link>
             {token ? (
               <>
                 <span className="text-gray-600 text-sm">
