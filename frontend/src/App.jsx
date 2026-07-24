@@ -7,6 +7,8 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminGenrePage from './pages/AdminGenrePage'
 import AdminMoviePage from './pages/AdminMoviePage'
 import AdminMovieForm from './pages/AdminMovieForm'
+import MovieListingPage from './pages/MovieListingPage'
+import MovieDetailPage from './pages/MovieDetailPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -19,6 +21,8 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/movies" element={<MovieListingPage />} />
+          <Route path="/movies/:id" element={<MovieDetailPage />} />
           <Route
             path="/login"
             element={token ? <Navigate to="/" replace /> : <Login />}
