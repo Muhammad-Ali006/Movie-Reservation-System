@@ -6,6 +6,7 @@ public class MovieCast {
     private Long actorId;
     private String roleName;
     private String actorName;
+    private String photoUrl;
 
     public MovieCast() {}
 
@@ -30,4 +31,7 @@ public class MovieCast {
 
     public String getActorName() { return actorName; }
     public void setActorName(String actorName) { this.actorName = actorName; }
+
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 }
