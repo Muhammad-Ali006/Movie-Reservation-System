@@ -43,9 +43,16 @@ public class AdminMovieController {
         movie.setTitle(request.getTitle());
         movie.setDescription(request.getDescription());
         movie.setPosterUrl(request.getPosterUrl());
-        movie.setGenreId(request.getGenreId());
         movie.setDurationMinutes(request.getDurationMinutes());
+        movie.setReleaseDate(request.getReleaseDate());
+        movie.setOriginalLanguage(request.getOriginalLanguage());
+        movie.setDirector(request.getDirector());
         Movie saved = movieRepository.save(movie);
+
+        if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
+            movieRepository.saveGenres(saved.getId(), request.getGenreIds());
+        }
+
         return ResponseEntity.ok(saved);
     }
 
@@ -53,12 +60,23 @@ public class AdminMovieController {
     public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody MovieRequest request) {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+        if (!movie.getTitle().equals(request.getTitle())) {
+            movie.setSlug(null);
+        }
         movie.setTitle(request.getTitle());
         movie.setDescription(request.getDescription());
         if (request.getPosterUrl() != null) movie.setPosterUrl(request.getPosterUrl());
-        movie.setGenreId(request.getGenreId());
         movie.setDurationMinutes(request.getDurationMinutes());
+        movie.setReleaseDate(request.getReleaseDate());
+        movie.setOriginalLanguage(request.getOriginalLanguage());
+        movie.setDirector(request.getDirector());
         movieRepository.update(movie);
+
+        movieRepository.deleteGenresByMovieId(id);
+        if (request.getGenreIds() != null && !request.getGenreIds().isEmpty()) {
+            movieRepository.saveGenres(id, request.getGenreIds());
+        }
+
         return ResponseEntity.ok(movie);
     }
 
@@ -102,17 +120,48 @@ public class AdminMovieController {
 
     @PostMapping("/{movieId}/cast")
     public ResponseEntity<Map<String, String>> addCastMember(@PathVariable Long movieId,
-                                                              @RequestBody Map<String, Object> body) {
+                                                              @RequestParam("actorName") String actorName,
+                                                              @RequestParam("roleName") String roleName,
+                                                              @RequestParam(value = "photo", required = false) MultipartFile photo) {
         if (!movieRepository.existsById(movieId)) {
             throw new ResourceNotFoundException("Movie not found");
         }
-        Long actorId = Long.valueOf(body.get("actorId").toString());
-        String roleName = (String) body.get("roleName");
 
-        Actor actor = actorRepository.findById(actorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Actor not found"));
+        Actor actor = actorRepository.findByName(actorName.trim()).orElseGet(() -> {
+            Actor newActor = new Actor();
+            newActor.setName(actorName.trim());
 
-        movieCastRepository.save(movieId, actorId, roleName);
+            if (photo != null && !photo.isEmpty()) {
+                try {
+                    String uploadDir = "uploads/actors/";
+                    Files.createDirectories(Paths.get(uploadDir));
+                    String fileName = UUID.randomUUID().toString().substring(0, 8) + "_" + photo.getOriginalFilename();
+                    Path filePath = Paths.get(uploadDir + fileName);
+                    Files.write(filePath, photo.getBytes());
+                    newActor.setPhotoUrl("/uploads/actors/" + fileName);
+                } catch (IOException e) {
+                    newActor.setPhotoUrl(null);
+                }
+            }
+
+            return actorRepository.save(newActor);
+        });
+
+        if (photo != null && !photo.isEmpty() && actor.getPhotoUrl() == null) {
+            try {
+                String uploadDir = "uploads/actors/";
+                Files.createDirectories(Paths.get(uploadDir));
+                String fileName = UUID.randomUUID().toString().substring(0, 8) + "_" + photo.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir + fileName);
+                Files.write(filePath, photo.getBytes());
+                actor.setPhotoUrl("/uploads/actors/" + fileName);
+                actorRepository.update(actor);
+            } catch (IOException e) {
+                // continue without photo
+            }
+        }
+
+        movieCastRepository.save(movieId, actor.getId(), roleName.trim());
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Cast member added successfully");
