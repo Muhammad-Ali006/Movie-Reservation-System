@@ -37,6 +37,12 @@ public class ActorRepository {
         return actors.stream().findFirst();
     }
 
+    public Optional<Actor> findByName(String name) {
+        String sql = "SELECT * FROM actors WHERE LOWER(name) = LOWER(?)";
+        var actors = jdbcTemplate.query(sql, actorRowMapper, name);
+        return actors.stream().findFirst();
+    }
+
     public Actor save(Actor actor) {
         String sql = "INSERT INTO actors (name, bio, photo_url) VALUES (?, ?, ?)";
         jdbcTemplate.update(sql, actor.getName(), actor.getBio(), actor.getPhotoUrl());
