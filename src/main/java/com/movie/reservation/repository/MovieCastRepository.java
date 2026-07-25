@@ -23,12 +23,13 @@ public class MovieCastRepository {
         mc.setActorId(rs.getLong("actor_id"));
         mc.setRoleName(rs.getString("role_name"));
         mc.setActorName(rs.getString("actor_name"));
+        mc.setPhotoUrl(rs.getString("photo_url"));
         return mc;
     };
 
     public List<MovieCast> findByMovieId(Long movieId) {
         String sql = """
-            SELECT mc.*, a.name AS actor_name
+            SELECT mc.*, a.name AS actor_name, a.photo_url
             FROM movie_cast mc
             JOIN actors a ON a.id = mc.actor_id
             WHERE mc.movie_id = ?
