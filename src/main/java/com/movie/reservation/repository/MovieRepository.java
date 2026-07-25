@@ -32,19 +32,48 @@ public class MovieRepository {
         return movies.stream().findFirst();
     }
 
-    public Movie save(Movie movie) {
-        String sql = "INSERT INTO movies (title, description, poster_url, genre_id, duration_minutes) VALUES (?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, movie.getTitle(), movie.getDescription(), movie.getPosterUrl(),
-                movie.getGenreId(), movie.getDurationMinutes());
+    public Optional<Movie> findBySlug(String slug) {
+        String sql = "SELECT * FROM movies WHERE slug = ?";
+        var movies = jdbcTemplate.query(sql, movieRowMapper, slug);
+        return movies.stream().findFirst();
+    }
 
-        String findSql = "SELECT * FROM movies WHERE title = ? ORDER BY created_at DESC";
-        return jdbcTemplate.queryForObject(findSql, movieRowMapper, movie.getTitle());
+    public String generateSlug(String title) {
+        String baseSlug = java.text.Normalizer.normalize(title, java.text.Normalizer.Form.NFD)
+                .replaceAll("[^a-zA-Z0-9\\s-]", "")
+                .replaceAll("[\\s-]+", "-")
+                .replaceAll("^-|-$", "")
+                .toLowerCase();
+
+        String slug = baseSlug;
+        int counter = 2;
+        while (jdbcTemplate.queryForObject("SELECT COUNT(*) FROM movies WHERE slug = ?", Integer.class, slug) > 0) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+        return slug;
+    }
+
+    public Movie save(Movie movie) {
+        String slug = generateSlug(movie.getTitle());
+        movie.setSlug(slug);
+
+        String sql = "INSERT INTO movies (title, slug, description, poster_url, duration_minutes, release_date, original_language, director) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, movie.getTitle(), movie.getSlug(), movie.getDescription(), movie.getPosterUrl(),
+                movie.getDurationMinutes(), movie.getReleaseDate(), movie.getOriginalLanguage(), movie.getDirector());
+
+        String findSql = "SELECT * FROM movies WHERE slug = ? ORDER BY created_at DESC";
+        return jdbcTemplate.queryForObject(findSql, movieRowMapper, movie.getSlug());
     }
 
     public void update(Movie movie) {
-        String sql = "UPDATE movies SET title = ?, description = ?, poster_url = ?, genre_id = ?, duration_minutes = ? WHERE id = ?";
-        jdbcTemplate.update(sql, movie.getTitle(), movie.getDescription(), movie.getPosterUrl(),
-                movie.getGenreId(), movie.getDurationMinutes(), movie.getId());
+        if (movie.getSlug() == null) {
+            movie.setSlug(generateSlug(movie.getTitle()));
+        }
+
+        String sql = "UPDATE movies SET title = ?, slug = ?, description = ?, poster_url = ?, duration_minutes = ?, release_date = ?, original_language = ?, director = ? WHERE id = ?";
+        jdbcTemplate.update(sql, movie.getTitle(), movie.getSlug(), movie.getDescription(), movie.getPosterUrl(),
+                movie.getDurationMinutes(), movie.getReleaseDate(), movie.getOriginalLanguage(), movie.getDirector(), movie.getId());
     }
 
     public void updatePosterUrl(Long id, String posterUrl) {
@@ -52,7 +81,6 @@ public class MovieRepository {
     }
 
     public void deleteById(Long id) {
-        jdbcTemplate.update("DELETE FROM movie_cast WHERE movie_id = ?", id);
         jdbcTemplate.update("DELETE FROM movies WHERE id = ?", id);
     }
 
@@ -61,14 +89,36 @@ public class MovieRepository {
         return count != null && count > 0;
     }
 
+    public void saveGenres(Long movieId, List<Long> genreIds) {
+        String sql = "INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)";
+        for (Long genreId : genreIds) {
+            jdbcTemplate.update(sql, movieId, genreId);
+        }
+    }
+
+    public void deleteGenresByMovieId(Long movieId) {
+        jdbcTemplate.update("DELETE FROM movie_genres WHERE movie_id = ?", movieId);
+    }
+
+    public List<Long> findGenreIdsByMovieId(Long movieId) {
+        String sql = "SELECT genre_id FROM movie_genres WHERE movie_id = ? ORDER BY genre_id ASC";
+        return jdbcTemplate.queryForList(sql, Long.class, movieId);
+    }
+
     private Movie mapMovie(ResultSet rs) throws SQLException {
         Movie movie = new Movie();
         movie.setId(rs.getLong("id"));
         movie.setTitle(rs.getString("title"));
+        movie.setSlug(rs.getString("slug"));
         movie.setDescription(rs.getString("description"));
         movie.setPosterUrl(rs.getString("poster_url"));
-        movie.setGenreId(rs.getLong("genre_id"));
         movie.setDurationMinutes(rs.getInt("duration_minutes"));
+        java.sql.Date releaseDate = rs.getDate("release_date");
+        if (releaseDate != null) {
+            movie.setReleaseDate(releaseDate.toLocalDate());
+        }
+        movie.setOriginalLanguage(rs.getString("original_language"));
+        movie.setDirector(rs.getString("director"));
         movie.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         return movie;
     }
