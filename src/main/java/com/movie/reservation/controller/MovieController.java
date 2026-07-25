@@ -25,20 +25,38 @@ public class MovieController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Movie>> getAllMovies() {
-        return ResponseEntity.ok(movieRepository.findAll());
+    public ResponseEntity<List<Map<String, Object>>> getAllMovies() {
+        List<Movie> movies = movieRepository.findAll();
+        List<Map<String, Object>> result = movies.stream().map(movie -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", movie.getId());
+            map.put("title", movie.getTitle());
+            map.put("slug", movie.getSlug());
+            map.put("description", movie.getDescription());
+            map.put("posterUrl", movie.getPosterUrl());
+            map.put("durationMinutes", movie.getDurationMinutes());
+            map.put("releaseDate", movie.getReleaseDate());
+            map.put("originalLanguage", movie.getOriginalLanguage());
+            map.put("director", movie.getDirector());
+            map.put("createdAt", movie.getCreatedAt());
+            map.put("genreIds", movieRepository.findGenreIdsByMovieId(movie.getId()));
+            return map;
+        }).toList();
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getMovieById(@PathVariable Long id) {
-        Movie movie = movieRepository.findById(id)
+    @GetMapping("/{slug}")
+    public ResponseEntity<Map<String, Object>> getMovieBySlug(@PathVariable String slug) {
+        Movie movie = movieRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
 
-        List<MovieCast> cast = movieCastRepository.findByMovieId(id);
+        List<MovieCast> cast = movieCastRepository.findByMovieId(movie.getId());
+        List<Long> genreIds = movieRepository.findGenreIdsByMovieId(movie.getId());
 
         Map<String, Object> response = new HashMap<>();
         response.put("movie", movie);
         response.put("cast", cast);
+        response.put("genreIds", genreIds);
         return ResponseEntity.ok(response);
     }
 }
