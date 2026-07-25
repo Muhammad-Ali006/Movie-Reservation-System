@@ -16,11 +16,21 @@ CREATE TABLE IF NOT EXISTS genres (
 CREATE TABLE IF NOT EXISTS movies (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     poster_url VARCHAR(500),
-    genre_id BIGINT REFERENCES genres(id),
     duration_minutes INT NOT NULL,
+    release_date DATE,
+    original_language VARCHAR(10),
+    director VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS movie_genres (
+    id BIGSERIAL PRIMARY KEY,
+    movie_id BIGINT REFERENCES movies(id) ON DELETE CASCADE,
+    genre_id BIGINT REFERENCES genres(id) ON DELETE CASCADE,
+    UNIQUE(movie_id, genre_id)
 );
 
 CREATE TABLE IF NOT EXISTS showtimes (
@@ -67,7 +77,7 @@ CREATE TABLE IF NOT EXISTS actors (
 
 CREATE TABLE IF NOT EXISTS movie_cast (
     id BIGSERIAL PRIMARY KEY,
-    movie_id BIGINT REFERENCES movies(id),
-    actor_id BIGINT REFERENCES actors(id),
+    movie_id BIGINT REFERENCES movies(id) ON DELETE CASCADE,
+    actor_id BIGINT REFERENCES actors(id) ON DELETE CASCADE,
     role_name VARCHAR(255)
 );
