@@ -30,7 +30,7 @@ function MovieListingPage() {
   const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
 
   const filteredMovies = selectedGenre
-    ? movies.filter(m => m.genreId === Number(selectedGenre))
+    ? movies.filter(m => m.genreIds?.includes(Number(selectedGenre)))
     : movies
 
   if (loading) {
@@ -81,7 +81,7 @@ function MovieListingPage() {
           {filteredMovies.map(movie => (
             <Link
               key={movie.id}
-              to={`/movies/${movie.id}`}
+              to={`/movies/${movie.slug}`}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               {movie.posterUrl ? (
@@ -100,9 +100,19 @@ function MovieListingPage() {
                 <h2 className="text-lg font-semibold text-gray-800 mb-1 truncate">
                   {movie.title}
                 </h2>
-                <p className="text-sm text-gray-600 mb-2">
-                  {genreMap[movie.genreId] || 'Unknown Genre'}
-                </p>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {movie.genreIds?.slice(0, 2).map((gid, index) => (
+                    <span
+                      key={index}
+                      className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full"
+                    >
+                      {genreMap[gid] || 'Unknown'}
+                    </span>
+                  ))}
+                  {movie.genreIds?.length > 2 && (
+                    <span className="text-xs text-gray-500">+{movie.genreIds.length - 2}</span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-500">
                   {movie.durationMinutes} min
                 </p>
