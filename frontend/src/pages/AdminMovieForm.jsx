@@ -11,11 +11,13 @@ function AdminMovieForm() {
     title: '',
     description: '',
     posterUrl: '',
-    genreId: '',
     durationMinutes: '',
+    releaseDate: '',
+    originalLanguage: '',
+    director: '',
   })
   const [genres, setGenres] = useState([])
-  const [actors, setActors] = useState([])
+  const [selectedGenreIds, setSelectedGenreIds] = useState([])
   const [cast, setCast] = useState([])
 
   const [posterFile, setPosterFile] = useState(null)
@@ -25,8 +27,9 @@ function AdminMovieForm() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const [castActorId, setCastActorId] = useState('')
+  const [castActorName, setCastActorName] = useState('')
   const [castRoleName, setCastRoleName] = useState('')
+  const [castPhotoFile, setCastPhotoFile] = useState(null)
   const [addingCast, setAddingCast] = useState(false)
   const [castError, setCastError] = useState('')
 
@@ -36,25 +39,24 @@ function AdminMovieForm() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const requests = [
-          api.get('/genres'),
-          api.get('/actors'),
-        ]
+        const requests = [api.get('/genres')]
         if (isEditing) {
           requests.push(api.get(`/movies/${id}`))
         }
         const results = await Promise.all(requests)
         setGenres(results[0].data)
-        setActors(results[1].data)
         if (isEditing) {
-          const { movie, cast: movieCast } = results[2].data
+          const { movie, cast: movieCast, genreIds } = results[1].data
           setFormData({
             title: movie.title,
             description: movie.description || '',
             posterUrl: movie.posterUrl || '',
-            genreId: movie.genreId,
             durationMinutes: movie.durationMinutes,
+            releaseDate: movie.releaseDate || '',
+            originalLanguage: movie.originalLanguage || '',
+            director: movie.director || '',
           })
+          setSelectedGenreIds(genreIds || [])
           setCast(movieCast)
           if (movie.posterUrl) {
             setPosterPreview(movie.posterUrl)
@@ -73,6 +75,14 @@ function AdminMovieForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
+  const handleGenreToggle = (genreId) => {
+    setSelectedGenreIds(prev =>
+      prev.includes(genreId)
+        ? prev.filter(id => id !== genreId)
+        : [...prev, genreId]
+    )
+  }
+
   const handlePosterChange = (e) => {
     const file = e.target.files[0]
     if (file) {
@@ -89,8 +99,8 @@ function AdminMovieForm() {
     try {
       const payload = {
         ...formData,
-        genreId: Number(formData.genreId),
         durationMinutes: Number(formData.durationMinutes),
+        genreIds: selectedGenreIds,
       }
 
       let movieId
@@ -139,18 +149,24 @@ function AdminMovieForm() {
 
   const handleAddCast = async (e) => {
     e.preventDefault()
-    if (!castActorId || !castRoleName.trim()) return
+    if (!castActorName.trim() || !castRoleName.trim()) return
     setAddingCast(true)
     setCastError('')
     try {
-      await api.post(`/admin/movies/${id}/cast`, {
-        actorId: Number(castActorId),
-        roleName: castRoleName.trim(),
+      const form = new FormData()
+      form.append('actorName', castActorName.trim())
+      form.append('roleName', castRoleName.trim())
+      if (castPhotoFile) {
+        form.append('photo', castPhotoFile)
+      }
+      await api.post(`/admin/movies/${id}/cast`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
       const res = await api.get(`/movies/${id}`)
       setCast(res.data.cast)
-      setCastActorId('')
+      setCastActorName('')
       setCastRoleName('')
+      setCastPhotoFile(null)
     } catch (err) {
       setCastError(err.response?.data?.message || 'Failed to add cast member')
     } finally {
@@ -166,10 +182,6 @@ function AdminMovieForm() {
       setCastError(err.response?.data?.message || 'Failed to remove cast member')
     }
   }
-
-  const availableActors = actors.filter(
-    a => !cast.some(c => c.actorId === a.id)
-  )
 
   if (loading) {
     return (
@@ -222,22 +234,6 @@ function AdminMovieForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
-            <select
-              name="genreId"
-              value={formData.genreId}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select genre</option>
-              {genres.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
             <input
               type="number"
@@ -250,6 +246,70 @@ function AdminMovieForm() {
               placeholder="e.g. 120"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Release Date</label>
+            <input
+              type="date"
+              name="releaseDate"
+              value={formData.releaseDate}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Original Language</label>
+            <input
+              type="text"
+              name="originalLanguage"
+              value={formData.originalLanguage}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. English"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Director</label>
+            <input
+              type="text"
+              name="director"
+              value={formData.director}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. Christopher Nolan"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Genres</label>
+          <div className="flex flex-wrap gap-2">
+            {genres.map(g => (
+              <label
+                key={g.id}
+                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm cursor-pointer border transition ${
+                  selectedGenreIds.includes(g.id)
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedGenreIds.includes(g.id)}
+                  onChange={() => handleGenreToggle(g.id)}
+                  className="sr-only"
+                />
+                {g.name}
+              </label>
+            ))}
+          </div>
+          {genres.length === 0 && (
+            <p className="text-gray-500 text-sm">No genres available. Create genres first.</p>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -269,43 +329,53 @@ function AdminMovieForm() {
         </div>
       </form>
 
-      {isEditing && (
-        <div className="mt-8 space-y-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Poster</h2>
+      <div className="mt-8 space-y-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold mb-4">Poster</h2>
 
-            {posterPreview && (
-              <img
-                src={posterPreview}
-                alt="Poster preview"
-                className="mb-4 rounded max-h-64 object-contain"
-              />
-            )}
+          {posterPreview && (
+            <img
+              src={posterPreview}
+              alt="Poster preview"
+              className="mb-4 rounded max-h-64 object-contain"
+            />
+          )}
 
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            <label className="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 cursor-pointer inline-block">
+              Choose Poster Image
               <input
                 type="file"
                 accept="image/*"
                 onChange={handlePosterChange}
-                className="text-sm text-gray-600"
+                className="hidden"
               />
-              {posterFile && (
-                <button
-                  type="button"
-                  onClick={handlePosterUpload}
-                  disabled={posterUploading}
-                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {posterUploading ? 'Uploading...' : 'Upload Poster'}
-                </button>
-              )}
-            </div>
-
-            {posterError && (
-              <div className="bg-red-50 text-red-600 p-2 rounded mt-2 text-sm">{posterError}</div>
+            </label>
+            {posterFile && (
+              <span className="text-sm text-gray-500">{posterFile.name}</span>
+            )}
+            {posterFile && isEditing && (
+              <button
+                type="button"
+                onClick={handlePosterUpload}
+                disabled={posterUploading}
+                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+              >
+                {posterUploading ? 'Uploading...' : 'Upload Poster'}
+              </button>
             )}
           </div>
 
+          {!isEditing && posterFile && (
+            <p className="text-gray-500 text-sm mt-2">Poster will be uploaded after creating the movie.</p>
+          )}
+
+          {posterError && (
+            <div className="bg-red-50 text-red-600 p-2 rounded mt-2 text-sm">{posterError}</div>
+          )}
+        </div>
+
+        {isEditing && (
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-lg font-semibold mb-4">Cast</h2>
 
@@ -317,11 +387,20 @@ function AdminMovieForm() {
               <div className="space-y-2 mb-4">
                 {cast.map((c) => (
                   <div key={c.id} className="flex items-center justify-between bg-gray-50 rounded px-4 py-2">
-                    <span className="text-sm">
-                      <span className="font-medium">{c.actorName}</span>
-                      <span className="text-gray-500"> as </span>
-                      <span>{c.roleName}</span>
-                    </span>
+                    <div className="flex items-center gap-3">
+                      {c.photoUrl ? (
+                        <img src={c.photoUrl} alt={c.actorName} className="h-10 w-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs">
+                          {c.actorName?.charAt(0)}
+                        </div>
+                      )}
+                      <span className="text-sm">
+                        <span className="font-medium">{c.actorName}</span>
+                        <span className="text-gray-500"> as </span>
+                        <span>{c.roleName}</span>
+                      </span>
+                    </div>
                     <button
                       onClick={() => handleRemoveCast(c.id)}
                       className="text-red-600 text-sm hover:underline"
@@ -335,47 +414,66 @@ function AdminMovieForm() {
               <p className="text-gray-500 text-sm mb-4">No cast members yet.</p>
             )}
 
-            {availableActors.length > 0 ? (
-              <form onSubmit={handleAddCast} className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Actor</label>
-                  <select
-                    value={castActorId}
-                    onChange={(e) => setCastActorId(e.target.value)}
+            <form onSubmit={handleAddCast} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Actor Name</label>
+                  <input
+                    type="text"
+                    value={castActorName}
+                    onChange={(e) => setCastActorName(e.target.value)}
                     required
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select actor</option>
-                    {availableActors.map(a => (
-                      <option key={a.id} value={a.id}>{a.name}</option>
-                    ))}
-                  </select>
+                    placeholder="e.g. Christian Bale"
+                  />
                 </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Character Name</label>
                   <input
                     type="text"
                     value={castRoleName}
                     onChange={(e) => setCastRoleName(e.target.value)}
                     required
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g. Batman"
+                    placeholder="e.g. Bruce Wayne"
                   />
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Actor Photo</label>
+                  <label className="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 cursor-pointer inline-block">
+                    Choose Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setCastPhotoFile(e.target.files[0])}
+                      className="hidden"
+                    />
+                  </label>
+                  {castPhotoFile && (
+                    <span className="text-sm text-gray-500 ml-2">{castPhotoFile.name}</span>
+                  )}
                 </div>
                 <button
                   type="submit"
                   disabled={addingCast}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap mt-5"
                 >
-                  {addingCast ? 'Adding...' : 'Add'}
+                  {addingCast ? 'Adding...' : 'Add Cast'}
                 </button>
-              </form>
-            ) : (
-              <p className="text-gray-500 text-sm">All actors have been assigned.</p>
-            )}
+              </div>
+            </form>
           </div>
-        </div>
-      )}
+        )}
+
+        {!isEditing && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-lg font-semibold mb-4">Cast</h2>
+            <p className="text-gray-500 text-sm">Cast can be added after creating the movie. Save the movie first, then edit it to add cast members.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
