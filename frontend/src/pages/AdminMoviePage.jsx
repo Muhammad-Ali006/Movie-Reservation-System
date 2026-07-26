@@ -73,7 +73,7 @@ function AdminMoviePage() {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-6 py-3 text-sm font-medium text-gray-600">Title</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-gray-600">Genre</th>
+                <th className="text-left px-6 py-3 text-sm font-medium text-gray-600">Genres</th>
                 <th className="text-left px-6 py-3 text-sm font-medium text-gray-600">Duration</th>
                 <th className="text-right px-6 py-3 text-sm font-medium text-gray-600">Actions</th>
               </tr>
@@ -82,7 +82,9 @@ function AdminMoviePage() {
               {movies.map((movie) => (
                 <tr key={movie.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-800">{movie.title}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{genreMap[movie.genreId] || '—'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {movie.genreIds?.map(gid => genreMap[gid]).filter(Boolean).join(', ') || '—'}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{movie.durationMinutes} min</td>
                   <td className="px-6 py-4 text-right text-sm space-x-2">
                     <button
