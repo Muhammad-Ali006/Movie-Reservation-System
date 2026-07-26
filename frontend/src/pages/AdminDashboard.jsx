@@ -10,7 +10,7 @@ function AdminDashboard() {
         Welcome, <span className="font-semibold">{user?.username}</span>
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           to="/admin/genres"
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
@@ -24,15 +24,7 @@ function AdminDashboard() {
           className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
         >
           <h2 className="text-xl font-semibold text-blue-600 mb-2">Movies</h2>
-          <p className="text-gray-500 text-sm">Manage movies, posters, and cast</p>
-        </Link>
-
-        <Link
-          to="/admin/actors"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
-        >
-          <h2 className="text-xl font-semibold text-blue-600 mb-2">Actors</h2>
-          <p className="text-gray-500 text-sm">Add or edit actors</p>
+          <p className="text-gray-500 text-sm">Manage movies, posters, cast, and genres</p>
         </Link>
       </div>
     </div>
