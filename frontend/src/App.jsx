@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminGenrePage from './pages/AdminGenrePage'
 import AdminMoviePage from './pages/AdminMoviePage'
 import AdminMovieForm from './pages/AdminMovieForm'
+import AdminActorPage from './pages/AdminActorPage'
 import MovieListingPage from './pages/MovieListingPage'
 import MovieDetailPage from './pages/MovieDetailPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -22,7 +23,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<MovieListingPage />} />
-          <Route path="/movies/:id" element={<MovieDetailPage />} />
+          <Route path="/movies/:slug" element={<MovieDetailPage />} />
           <Route
             path="/login"
             element={token ? <Navigate to="/" replace /> : <Login />}
@@ -44,6 +45,14 @@ function App() {
             element={
               <AdminRoute>
                 <AdminGenrePage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/actors"
+            element={
+              <AdminRoute>
+                <AdminActorPage />
               </AdminRoute>
             }
           />
