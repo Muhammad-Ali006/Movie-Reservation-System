@@ -33,6 +33,14 @@ CREATE TABLE IF NOT EXISTS movie_genres (
     UNIQUE(movie_id, genre_id)
 );
 
+CREATE TABLE IF NOT EXISTS screens (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    screen_type VARCHAR(20) NOT NULL,
+    total_seats INT NOT NULL,
+    seats_per_row INT NOT NULL DEFAULT 15
+);
+
 CREATE TABLE IF NOT EXISTS showtimes (
     id BIGSERIAL PRIMARY KEY,
     movie_id BIGINT REFERENCES movies(id),
