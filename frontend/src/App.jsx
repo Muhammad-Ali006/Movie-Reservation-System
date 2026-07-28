@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import Lenis from 'lenis'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -7,7 +9,6 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminGenrePage from './pages/AdminGenrePage'
 import AdminMoviePage from './pages/AdminMoviePage'
 import AdminMovieForm from './pages/AdminMovieForm'
-import AdminActorPage from './pages/AdminActorPage'
 import MovieListingPage from './pages/MovieListingPage'
 import MovieDetailPage from './pages/MovieDetailPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -16,10 +17,15 @@ import AdminRoute from './components/AdminRoute'
 function App() {
   const token = localStorage.getItem('token')
 
+  useEffect(() => {
+    const lenis = new Lenis({ autoRaf: true })
+    return () => lenis.destroy()
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main style={{ color: 'var(--color-text)' }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<MovieListingPage />} />
@@ -49,14 +55,6 @@ function App() {
             }
           />
           <Route
-            path="/admin/actors"
-            element={
-              <AdminRoute>
-                <AdminActorPage />
-              </AdminRoute>
-            }
-          />
-          <Route
             path="/admin/movies"
             element={
               <AdminRoute>
@@ -73,7 +71,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/movies/:id/edit"
+            path="/admin/movies/:slug/edit"
             element={
               <AdminRoute>
                 <AdminMovieForm />
