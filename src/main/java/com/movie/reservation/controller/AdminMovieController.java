@@ -8,6 +8,7 @@ import com.movie.reservation.model.MovieCast;
 import com.movie.reservation.repository.ActorRepository;
 import com.movie.reservation.repository.MovieCastRepository;
 import com.movie.reservation.repository.MovieRepository;
+import com.movie.reservation.service.FileStorageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,13 +29,16 @@ public class AdminMovieController {
     private final MovieRepository movieRepository;
     private final ActorRepository actorRepository;
     private final MovieCastRepository movieCastRepository;
+    private final FileStorageService fileStorageService;
 
     public AdminMovieController(MovieRepository movieRepository,
                                  ActorRepository actorRepository,
-                                 MovieCastRepository movieCastRepository) {
+                                 MovieCastRepository movieCastRepository,
+                                 FileStorageService fileStorageService) {
         this.movieRepository = movieRepository;
         this.actorRepository = actorRepository;
         this.movieCastRepository = movieCastRepository;
+        this.fileStorageService = fileStorageService;
     }
 
     @PostMapping
@@ -82,10 +86,13 @@ public class AdminMovieController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteMovie(@PathVariable Long id) {
-        if (!movieRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Movie not found");
-        }
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+
+        fileStorageService.deletePoster(movie.getPosterUrl());
+
         movieRepository.deleteById(id);
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Movie deleted successfully");
         return ResponseEntity.ok(response);
@@ -97,6 +104,8 @@ public class AdminMovieController {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
 
+        String oldPosterUrl = movie.getPosterUrl();
+
         try {
             String uploadDir = "uploads/posters/";
             Files.createDirectories(Paths.get(uploadDir));
@@ -107,6 +116,10 @@ public class AdminMovieController {
 
             String posterUrl = "/uploads/posters/" + fileName;
             movieRepository.updatePosterUrl(id, posterUrl);
+
+            if (oldPosterUrl != null && !oldPosterUrl.equals(posterUrl)) {
+                fileStorageService.deletePoster(oldPosterUrl);
+            }
 
             Map<String, String> response = new HashMap<>();
             response.put("posterUrl", posterUrl);
@@ -147,15 +160,21 @@ public class AdminMovieController {
             return actorRepository.save(newActor);
         });
 
-        if (photo != null && !photo.isEmpty() && actor.getPhotoUrl() == null) {
+        if (photo != null && !photo.isEmpty()) {
+            String oldPhotoUrl = actor.getPhotoUrl();
             try {
                 String uploadDir = "uploads/actors/";
                 Files.createDirectories(Paths.get(uploadDir));
                 String fileName = UUID.randomUUID().toString().substring(0, 8) + "_" + photo.getOriginalFilename();
                 Path filePath = Paths.get(uploadDir + fileName);
                 Files.write(filePath, photo.getBytes());
-                actor.setPhotoUrl("/uploads/actors/" + fileName);
+                String newPhotoUrl = "/uploads/actors/" + fileName;
+                actor.setPhotoUrl(newPhotoUrl);
                 actorRepository.update(actor);
+
+                if (oldPhotoUrl != null && !oldPhotoUrl.equals(newPhotoUrl)) {
+                    fileStorageService.deleteActorPhoto(oldPhotoUrl);
+                }
             } catch (IOException e) {
                 // continue without photo
             }
