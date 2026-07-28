@@ -1,124 +1,225 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import { Clock, Filter, ChevronLeft, ChevronRight, Film } from 'lucide-react'
 import api from '../utils/api'
+
+const TABS = [
+  { key: 'NOW_SHOWING', label: 'Now Showing' },
+  { key: 'COMING_SOON', label: 'Coming Soon' },
+  { key: 'ALL', label: 'All Movies' },
+]
+
+const SORT_OPTIONS = [
+  { value: 'createdAt', label: 'Newest' },
+  { value: 'title', label: 'Title A-Z' },
+  { value: 'releaseDate', label: 'Release Date' },
+  { value: 'duration', label: 'Duration' },
+]
 
 function MovieListingPage() {
   const [movies, setMovies] = useState([])
   const [genres, setGenres] = useState([])
+  const [activeTab, setActiveTab] = useState('ALL')
   const [selectedGenre, setSelectedGenre] = useState('')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortDir, setSortDir] = useState('desc')
+  const [page, setPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+
+  const fetchMovies = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = {
+        page,
+        size: 6,
+        sortBy,
+        sortDir,
+      }
+      if (activeTab !== 'ALL') params.availability = activeTab
+      if (selectedGenre) params.genreId = selectedGenre
+
+      const [moviesRes, genresRes] = await Promise.all([
+        api.get('/movies', { params }),
+        genres.length === 0 ? api.get('/genres') : Promise.resolve({ data: genres }),
+      ])
+
+      setMovies(moviesRes.data.content || [])
+      setTotalPages(moviesRes.data.totalPages || 0)
+      if (genres.length === 0) setGenres(genresRes.data)
+    } catch {
+      setMovies([])
+    } finally {
+      setLoading(false)
+    }
+  }, [page, sortBy, sortDir, activeTab, selectedGenre, genres.length])
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [moviesRes, genresRes] = await Promise.all([
-          api.get('/movies'),
-          api.get('/genres'),
-        ])
-        setMovies(moviesRes.data)
-        setGenres(genresRes.data)
-      } catch (err) {
-        setError('Failed to load movies')
-      } finally {
-        setLoading(false)
-      }
+    fetchMovies()
+  }, [fetchMovies])
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    setPage(0)
+  }
+
+  const handleGenreChange = (genreId) => {
+    setSelectedGenre(genreId)
+    setPage(0)
+  }
+
+  const handleSortChange = (newSort) => {
+    if (newSort === sortBy) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(newSort)
+      setSortDir(newSort === 'title' ? 'asc' : 'desc')
     }
-    fetchData()
-  }, [])
+    setPage(0)
+  }
 
   const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
 
-  const filteredMovies = selectedGenre
-    ? movies.filter(m => m.genreIds?.includes(Number(selectedGenre)))
-    : movies
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto py-8">
-        <p className="text-gray-500">Loading movies...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-7xl mx-auto py-8">
-        <div className="bg-red-50 text-red-600 p-3 rounded text-sm">{error}</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="max-w-7xl mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Browse Movies</h1>
+    <div className="max-w-7xl mx-auto px-6 py-8 pt-20">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>Browse Movies</h1>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--color-surface)' }}>
+        {TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabChange(tab.key)}
+            className="px-4 py-2 rounded-md text-sm font-medium transition-all"
+            style={{
+              backgroundColor: activeTab === tab.key ? 'var(--color-primary)' : 'transparent',
+              color: activeTab === tab.key ? '#fff' : 'var(--color-text-muted)',
+            }}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filters Row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
         <div className="flex items-center gap-2">
-          <label htmlFor="genre-filter" className="text-sm text-gray-600">
-            Genre:
-          </label>
+          <Filter className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
           <select
-            id="genre-filter"
             value={selectedGenre}
-            onChange={(e) => setSelectedGenre(e.target.value)}
-            className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
+            onChange={(e) => handleGenreChange(e.target.value)}
+            className="rounded-lg px-3 py-2 text-sm"
+            style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}>
             <option value="">All Genres</option>
             {genres.map(g => (
               <option key={g.id} value={g.id}>{g.name}</option>
             ))}
           </select>
         </div>
+
+        <div className="flex gap-1 flex-wrap">
+          {SORT_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => handleSortChange(opt.value)}
+              className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+              style={{
+                backgroundColor: sortBy === opt.value ? 'var(--color-primary)' : 'var(--color-surface)',
+                color: sortBy === opt.value ? '#fff' : 'var(--color-text-muted)',
+                border: '1px solid var(--color-border)',
+              }}>
+              {opt.label} {sortBy === opt.value ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {filteredMovies.length === 0 ? (
-        <p className="text-gray-500">
-          {selectedGenre ? 'No movies found for this genre.' : 'No movies available.'}
+      {/* Movie Grid */}
+      {loading ? (
+        <p style={{ color: 'var(--color-text-muted)' }}>Loading movies...</p>
+      ) : movies.length === 0 ? (
+        <p style={{ color: 'var(--color-text-muted)' }}>
+          {activeTab === 'NOW_SHOWING'
+            ? 'No movies are currently showing.'
+            : activeTab === 'COMING_SOON'
+              ? 'No upcoming movies.'
+              : 'No movies found.'}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredMovies.map(movie => (
+          {movies.map(movie => (
             <Link
               key={movie.id}
               to={`/movies/${movie.slug}`}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-            >
+              className="rounded-lg overflow-hidden transition-all relative"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-light)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+              {/* Badge */}
+              <span
+                className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full z-10"
+                style={{
+                  backgroundColor: movie.hasShowtimes ? 'var(--color-primary)' : 'var(--color-bg)',
+                  color: movie.hasShowtimes ? '#fff' : 'var(--color-text-muted)',
+                  border: movie.hasShowtimes ? 'none' : '1px solid var(--color-border)',
+                }}>
+                {movie.hasShowtimes ? 'NOW SHOWING' : 'COMING SOON'}
+              </span>
+
               {movie.posterUrl ? (
-                <img
-                  src={movie.posterUrl}
-                  alt={movie.title}
-                  className="w-full h-64 object-cover"
-                />
+                <img src={movie.posterUrl} alt={movie.title} className="w-full h-64 object-cover" />
               ) : (
-                <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400 text-sm">No Poster</span>
+                <div className="w-full h-64 flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
+                  <Film className="w-10 h-10" style={{ color: 'var(--color-text-muted)' }} />
                 </div>
               )}
 
               <div className="p-4">
-                <h2 className="text-lg font-semibold text-gray-800 mb-1 truncate">
+                <h2 className="text-lg font-semibold mb-1 truncate" style={{ color: 'var(--color-text)' }}>
                   {movie.title}
                 </h2>
                 <div className="flex flex-wrap gap-1 mb-2">
                   {movie.genreIds?.slice(0, 2).map((gid, index) => (
                     <span
                       key={index}
-                      className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full"
-                    >
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}>
                       {genreMap[gid] || 'Unknown'}
                     </span>
                   ))}
                   {movie.genreIds?.length > 2 && (
-                    <span className="text-xs text-gray-500">+{movie.genreIds.length - 2}</span>
+                    <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>+{movie.genreIds.length - 2}</span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500">
+                <div className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                  <Clock className="w-3 h-3" />
                   {movie.durationMinutes} min
-                </p>
+                </div>
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="p-2 rounded-lg transition-all disabled:opacity-30"
+            style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}>
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            Page {page + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            className="p-2 rounded-lg transition-all disabled:opacity-30"
+            style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>

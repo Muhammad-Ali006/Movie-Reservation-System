@@ -44,3 +44,6 @@ node_modules/
 # Config files with credentials
 application.properties
 
+uploads
+frontend/public
+WEEK1-REPORT.md
