@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { ArrowLeft, Plus, AlertCircle } from 'lucide-react'
 import api from '../utils/api'
 
 function AdminGenrePage() {
@@ -16,9 +17,7 @@ function AdminGenrePage() {
   const [deletingId, setDeletingId] = useState(null)
   const [deleteError, setDeleteError] = useState('')
 
-  useEffect(() => {
-    fetchGenres()
-  }, [])
+  useEffect(() => { fetchGenres() }, [])
 
   const fetchGenres = async () => {
     setLoading(true)
@@ -63,7 +62,6 @@ function AdminGenrePage() {
     e.preventDefault()
     setFormLoading(true)
     setFormError('')
-
     try {
       if (editingGenre) {
         await api.put(`/admin/genres/${editingGenre.id}`, formData)
@@ -91,87 +89,61 @@ function AdminGenrePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-4xl mx-auto px-6 py-8 pt-20">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <Link to="/admin" className="text-sm text-blue-600 hover:underline mb-1 block">
-            &larr; Back to Dashboard
+          <Link to="/admin" className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--color-primary)' }}>
+            <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-800">Manage Genres</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text)' }}>Manage Genres</h1>
         </div>
-        <button
-          onClick={openCreateForm}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
-        >
-          + Add Genre
+        <button onClick={openCreateForm} className="flex items-center gap-1 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          style={{ backgroundColor: 'var(--color-primary)' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}>
+          <Plus className="w-4 h-4" /> Add Genre
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">
-          {error}
+        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+          <AlertCircle className="w-4 h-4" /> {error}
         </div>
       )}
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">
+        <div className="rounded-lg p-6 mb-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+          <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
             {editingGenre ? 'Edit Genre' : 'Add Genre'}
           </h2>
 
           {formError && (
-            <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">
-              {formError}
+            <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+              <AlertCircle className="w-4 h-4" /> {formError}
             </div>
           )}
 
           <form onSubmit={handleFormSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-                required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Genre name"
-              />
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Name</label>
+              <input type="text" name="name" value={formData.name} onChange={handleFormChange} required
+                className="w-full rounded-lg px-4 py-2" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                placeholder="Genre name" />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleFormChange}
-                rows="3"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Optional description"
-              />
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>Description</label>
+              <textarea name="description" value={formData.description} onChange={handleFormChange} rows="3"
+                className="w-full rounded-lg px-4 py-2" style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                placeholder="Optional description" />
             </div>
-
             <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={formLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
-              >
-                {formLoading
-                  ? 'Saving...'
-                  : editingGenre
-                    ? 'Update Genre'
-                    : 'Create Genre'}
+              <button type="submit" disabled={formLoading}
+                className="text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                style={{ backgroundColor: 'var(--color-primary)' }}>
+                {formLoading ? 'Saving...' : editingGenre ? 'Update Genre' : 'Create Genre'}
               </button>
-              <button
-                type="button"
-                onClick={closeForm}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 text-sm"
-              >
+              <button type="button" onClick={closeForm}
+                className="px-4 py-2 rounded-lg text-sm" style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
                 Cancel
               </button>
             </div>
@@ -180,59 +152,41 @@ function AdminGenrePage() {
       )}
 
       {deleteError && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">
-          {deleteError}
+        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+          <AlertCircle className="w-4 h-4" /> {deleteError}
         </div>
       )}
 
       {loading ? (
-        <p className="text-gray-500">Loading genres...</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>Loading genres...</p>
       ) : genres.length === 0 ? (
-        <p className="text-gray-500">No genres found.</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>No genres found.</p>
       ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left px-6 py-3 text-sm font-medium text-gray-600">Name</th>
-                <th className="text-left px-6 py-3 text-sm font-medium text-gray-600">Description</th>
-                <th className="text-right px-6 py-3 text-sm font-medium text-gray-600">Actions</th>
+        <div className="rounded-lg overflow-x-auto" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+          <table className="w-full min-w-[400px]">
+            <thead style={{ backgroundColor: 'var(--color-bg)' }}>
+              <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                <th className="text-left px-6 py-3 text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Name</th>
+                <th className="text-left px-6 py-3 text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Description</th>
+                <th className="text-right px-6 py-3 text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody>
               {genres.map((genre) => (
-                <tr key={genre.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-800">{genre.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{genre.description || '—'}</td>
+                <tr key={genre.id} style={{ borderBottom: '1px solid var(--color-border)' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                  <td className="px-6 py-4 text-sm font-medium" style={{ color: 'var(--color-text)' }}>{genre.name}</td>
+                  <td className="px-6 py-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{genre.description || '—'}</td>
                   <td className="px-6 py-4 text-right text-sm space-x-2">
-                    <button
-                      onClick={() => openEditForm(genre)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Edit
-                    </button>
+                    <button onClick={() => openEditForm(genre)} style={{ color: 'var(--color-primary)' }} className="hover:underline">Edit</button>
                     {deletingId === genre.id ? (
                       <span className="inline-flex items-center gap-1">
-                        <button
-                          onClick={() => handleDelete(genre.id)}
-                          className="text-red-600 font-medium hover:underline"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => setDeletingId(null)}
-                          className="text-gray-500 hover:underline"
-                        >
-                          Cancel
-                        </button>
+                        <button onClick={() => handleDelete(genre.id)} className="font-medium hover:underline" style={{ color: 'var(--color-error)' }}>Confirm</button>
+                        <button onClick={() => setDeletingId(null)} className="hover:underline" style={{ color: 'var(--color-text-muted)' }}>Cancel</button>
                       </span>
                     ) : (
-                      <button
-                        onClick={() => setDeletingId(genre.id)}
-                        className="text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
+                      <button onClick={() => setDeletingId(genre.id)} className="hover:underline" style={{ color: 'var(--color-error)' }}>Delete</button>
                     )}
                   </td>
                 </tr>
