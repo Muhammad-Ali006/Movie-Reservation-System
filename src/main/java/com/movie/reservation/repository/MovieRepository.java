@@ -26,6 +26,75 @@ public class MovieRepository {
         return jdbcTemplate.query(sql, movieRowMapper);
     }
 
+    public List<Movie> findAllFiltered(Long genreId, String sortBy, String sortDir, String availability, int offset, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT DISTINCT m.* FROM movies m");
+
+        if (genreId != null) {
+            sql.append(" INNER JOIN movie_genres mg ON m.id = mg.movie_id");
+        }
+
+        if ("NOW_SHOWING".equals(availability)) {
+            sql.append(" INNER JOIN showtimes s ON m.id = s.movie_id AND s.show_date >= CURRENT_DATE");
+        } else if ("COMING_SOON".equals(availability)) {
+            sql.append(" LEFT JOIN showtimes s_future ON m.id = s_future.movie_id AND s_future.show_date >= CURRENT_DATE");
+            sql.append(" WHERE s_future.id IS NULL");
+        }
+
+        if (genreId != null) {
+            sql.append(availability != null && "COMING_SOON".equals(availability) ? " AND" : " WHERE");
+            sql.append(" mg.genre_id = ?");
+        }
+
+        String validSort = switch (sortBy != null ? sortBy : "createdAt") {
+            case "title" -> "m.title";
+            case "releaseDate" -> "m.release_date";
+            case "duration" -> "m.duration_minutes";
+            default -> "m.created_at";
+        };
+        String direction = "asc".equalsIgnoreCase(sortDir) ? "ASC" : "DESC";
+
+        sql.append(" ORDER BY ").append(validSort).append(" ").append(direction);
+        sql.append(" LIMIT ? OFFSET ?");
+
+        Object[] params;
+        if (genreId != null) {
+            params = new Object[]{genreId, limit, offset};
+        } else {
+            params = new Object[]{limit, offset};
+        }
+
+        return jdbcTemplate.query(sql.toString(), movieRowMapper, params);
+    }
+
+    public int countFiltered(Long genreId, String availability) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT m.id) FROM movies m");
+
+        if (genreId != null) {
+            sql.append(" INNER JOIN movie_genres mg ON m.id = mg.movie_id");
+        }
+
+        if ("NOW_SHOWING".equals(availability)) {
+            sql.append(" INNER JOIN showtimes s ON m.id = s.movie_id AND s.show_date >= CURRENT_DATE");
+        } else if ("COMING_SOON".equals(availability)) {
+            sql.append(" LEFT JOIN showtimes s_future ON m.id = s_future.movie_id AND s_future.show_date >= CURRENT_DATE");
+            sql.append(" WHERE s_future.id IS NULL");
+        }
+
+        if (genreId != null) {
+            sql.append(availability != null && "COMING_SOON".equals(availability) ? " AND" : " WHERE");
+            sql.append(" mg.genre_id = ?");
+        }
+
+        Object[] params = genreId != null ? new Object[]{genreId} : new Object[]{};
+        Integer count = jdbcTemplate.queryForObject(sql.toString(), Integer.class, params);
+        return count != null ? count : 0;
+    }
+
+    public List<Long> findIdsWithFutureShowtimes() {
+        String sql = "SELECT DISTINCT movie_id FROM showtimes WHERE show_date >= CURRENT_DATE";
+        return jdbcTemplate.queryForList(sql, Long.class);
+    }
+
     public Optional<Movie> findById(Long id) {
         String sql = "SELECT * FROM movies WHERE id = ?";
         var movies = jdbcTemplate.query(sql, movieRowMapper, id);

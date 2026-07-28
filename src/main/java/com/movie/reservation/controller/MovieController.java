@@ -25,9 +25,27 @@ public class MovieController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAllMovies() {
-        List<Movie> movies = movieRepository.findAll();
-        List<Map<String, Object>> result = movies.stream().map(movie -> {
+    public ResponseEntity<Map<String, Object>> getAllMovies(
+            @RequestParam(required = false) Long genreId,
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @RequestParam(required = false, defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) String availability,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "6") int size) {
+
+        int offset = page * size;
+
+        List<Movie> movies = movieRepository.findAllFiltered(
+                genreId, sortBy, sortDir, availability, offset, size);
+
+        int totalElements = movieRepository.countFiltered(
+                genreId, availability);
+
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+
+        List<Long> moviesWithShowtimes = movieRepository.findIdsWithFutureShowtimes();
+
+        List<Map<String, Object>> content = movies.stream().map(movie -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", movie.getId());
             map.put("title", movie.getTitle());
@@ -40,9 +58,17 @@ public class MovieController {
             map.put("director", movie.getDirector());
             map.put("createdAt", movie.getCreatedAt());
             map.put("genreIds", movieRepository.findGenreIdsByMovieId(movie.getId()));
+            map.put("hasShowtimes", moviesWithShowtimes.contains(movie.getId()));
             return map;
         }).toList();
-        return ResponseEntity.ok(result);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", content);
+        response.put("totalPages", totalPages);
+        response.put("totalElements", totalElements);
+        response.put("currentPage", page);
+        response.put("size", size);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{slug}")
