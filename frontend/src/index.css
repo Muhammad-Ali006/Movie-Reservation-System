@@ -1,1 +1,151 @@
 @import "tailwindcss";
+
+/* ===================================================
+   COLOR CUSTOMIZATION — Change these to test any palette
+   =================================================== */
+:root {
+  /* Primary: Netflix Red */
+  --color-primary: #E50914;
+  --color-primary-hover: #B20710;
+  --color-primary-light: rgba(229, 9, 20, 0.15);
+
+  /* Secondary: Gold (for ratings) */
+  --color-accent: #FFC107;
+  --color-accent-hover: #E0A800;
+  --color-accent-light: rgba(255, 193, 7, 0.15);
+
+  /* Background: Cinema Black */
+  --color-bg: #0A0A0A;
+  --color-surface: #141414;
+  --color-surface-hover: #1F1F1F;
+
+  /* Text */
+  --color-text: #FFFFFF;
+  --color-text-secondary: #B3B3B3;
+  --color-text-muted: #808080;
+
+  /* Borders */
+  --color-border: #232323;
+  --color-border-light: #333333;
+
+  /* Status */
+  --color-success: #46D369;
+  --color-error: #E50914;
+  --color-error-light: rgba(229, 9, 20, 0.15);
+  --color-warning: #FFC107;
+}
+
+/* ===================================================
+   LENIS SMOOTH SCROLL
+   =================================================== */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ===================================================
+   DARK THEME FORM INPUTS
+   =================================================== */
+input, select, textarea {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.25);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ===================================================
+   SCROLLBAR STYLING (Dark Theme)
+   =================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ===================================================
+   NETFLIX-STYLE HERO BANNER
+   =================================================== */
+.hero-banner {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+
+.hero-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(10, 10, 10, 0.80) 0%,
+    rgba(10, 10, 10, 0.7) 40%,
+    rgba(10, 10, 10, 0.3) 70%,
+    rgba(10, 10, 10, 0.1) 100%
+  );
+  z-index: 1;
+}
+
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(to top, var(--color-bg) 0%, transparent 100%);
+  z-index: 1;
+}
+
+.hero-banner > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===================================================
+   MOVIE CARD HOVER EFFECTS
+   =================================================== */
+.movie-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.movie-card:hover {
+  transform: scale(1.05);
+  z-index: 10;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
