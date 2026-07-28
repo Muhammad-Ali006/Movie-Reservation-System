@@ -1,4 +1,4 @@
-cd # Movie Reservation System
+# Movie Reservation System
 
 A fullstack movie reservation platform built with Spring Boot 4.0.7, React 19, JDBC, and PostgreSQL.
 
@@ -26,6 +26,8 @@ A fullstack movie reservation platform built with Spring Boot 4.0.7, React 19, J
 | Tailwind CSS      | 4.3.3       |
 | React Router      | 7.18.1      |
 | Axios             | 1.18.1      |
+| Lenis             | —           |
+| Lucide React      | —           |
 
 ---
 
@@ -83,29 +85,70 @@ npm run dev
 - **CORS** — configured to allow `http://localhost:5173` (Vite dev server)
 - **Role-based access control** — `ROLE_USER` for regular users, `ROLE_ADMIN` for admin endpoints (`/api/admin/**`)
 - **Password encryption** — BCrypt via Spring Security `PasswordEncoder`
+- **Data seeder** — auto-creates admin account on startup (`admin / admin123`), seeds 6 cinema screens (2 small, 2 medium, 2 large)
+- **Global exception handler** — returns structured JSON errors for 404, 401, 400, and 500
+
+### Movies
+- **Multi-genre support** — many-to-many `movie_genres` junction table, movies can belong to multiple genres
+- **Extended movie fields** — `release_date`, `original_language`, `director`
+- **URL slugs** — movies accessed via `/api/movies/{slug}` (e.g. `/api/movies/the-dark-knight`), auto-generated from title, duplicates handled with `-2`, `-3` suffixes. Random IDs like `/movies/1` return 404, preventing enumeration attacks
+- **Poster upload** — multipart file upload to `uploads/posters/`, served as static resources via `WebConfig`
+
+### Cast & Actors
+- **Cast management** — add actors with role names to movie cast, managed through the admin movie form (not a separate page)
+- **Actor auto-creation** — typing a new actor name in the cast section auto-creates the actor record
+- **Actor photos** — photo upload for actors when adding cast, displayed as round avatars on movie detail page. If an existing actor has no photo, uploading one through cast updates their actor record for future use
+- **No separate actor module** — actors are only managed inline within the movie cast flow; backend actor endpoints exist for programmatic/API access
+
+### Cinema Screens
+- **6 fixed screens** — seeded on startup: 2 small (120 seats), 2 medium (150 seats), 2 large (180 seats)
+- **Standard layout** — all screens use 15 seats per row; rows labeled A, B, C... (8 rows for small, 10 for medium, 12 for large)
+- **Public endpoint** — `GET /api/screens` returns all screens with name, type, and seat count
+
+### Showtimes & Seats
+- **Admin showtime creation** — `POST /api/admin/showtimes` accepts movieId, screenId, showDate, showTime, pricePerSeat
+- **Auto seat generation** — when a showtime is created, seats are automatically generated based on the screen's capacity (e.g. Screen 5 → 180 seats → 12 rows × 15)
+- **Public showtime listing** — `GET /api/showtimes?movieId={id}` returns all showtimes for a movie with screen name, available seat count, and price
 
 ### Backend Architecture
 - **Layered pattern** — `controller → service → repository (JdbcTemplate)` with manual `RowMapper`
+- **File storage** — `FileStorageService` handles safe file deletion for poster/photo replacements and movie deletions (skips nulls, external URLs, and defaults; logs at INFO level)
 - **Global exception handler** — returns structured JSON errors:
   - `404` — `ResourceNotFoundException`
   - `401` — `UnauthorizedException`
   - `400` — `IllegalArgumentException`
   - `500` — generic fallback
-- **Data seeder** — auto-creates admin account on startup (`admin / admin123`)
+- **Static file serving** — `WebConfig` maps `/uploads/**` to the filesystem `uploads/` directory
+
+### UI & Design
+- **Cinema Noir theme** — dark color palette (`#0A0A0A` background, `#141414` surface, `#E50914` primary red, `#FFC107` gold accent) defined as CSS custom properties in `index.css` for easy palette swaps
+- **Netflix-style hero banner** — full-viewport home page with background cinema image (`public/cinema.jpeg`), multi-layer gradient overlay (left-to-right + bottom-to-top) for text readability over the image
+- **Transparent navbar** — gradient overlay navbar that sits on top of the hero banner, with `position: absolute` so the hero extends behind it
+- **Lenis smooth scroll** — initialized in `App.jsx` for buttery smooth scrolling across all pages
+- **Lucide React icons** — used throughout the app for consistent, lightweight iconography (Film, LogIn, LogOut, UserPlus, Shield, ArrowLeft, Clock, Globe, etc.)
+- **Dark-themed forms** — global CSS styles for dark input fields, selects, and textareas via CSS variables
+- **Custom scrollbar** — styled for dark theme
+- **Responsive design** — mobile-friendly layouts across all pages using Tailwind responsive utilities (`sm:`, `md:`, `lg:`)
 
 ### Frontend
 - **Axios client** (`utils/api.js`) — centralized API client with `baseURL: /api`
 - **Auto token injection** — request interceptor attaches `Authorization: Bearer <token>` from localStorage
 - **Auto logout on 401** — response interceptor clears token and redirects to `/login`
-- **Login/Signup pages** — forms wired to backend endpoints
-- **Navbar** — dynamic UI showing Login/Signup when logged out, Logout + Admin link (for admin role) when logged in
+- **Vite proxy** — proxies both `/api` and `/uploads` requests to the Spring Boot backend on port 8080
+- **Login/Signup pages** — forms wired to backend endpoints, redirect to `/` if already authenticated
+- **Navbar** — transparent gradient overlay navbar showing brand, "Movies" link, Login/Signup when logged out, greeting + Admin link + Logout when logged in
 - **Protected routes** — `ProtectedRoute` component redirects unauthenticated users to `/login`
 - **Admin routes** — `AdminRoute` component restricts access to users with `ADMIN` role
-- **Auth-aware redirects** — Login/Signup pages redirect to `/` if already authenticated
-- **Admin dashboard** — management hub with links to genre, movie, and actor pages
+- **Admin dashboard** — management hub with links to genre and movie pages
 - **AdminGenrePage** — list all genres, create/edit/delete with inline form
-- **AdminMoviePage** — list all movies with genre and duration, edit/delete with confirmation
-- **AdminMovieForm** — create/edit movie form, poster upload with preview, cast management (add/remove actors with role names)
+- **AdminMoviePage** — list all movies with multiple genres, edit/delete with confirmation
+- **AdminMovieForm** — create/edit movie form with:
+  - Title, description, duration, release date, original language, director
+  - Multi-genre toggleable checkboxes (not a dropdown)
+  - Styled poster file upload button with image preview
+  - Cast section: in create mode shows info message ("Cast can be added after creating the movie"); in edit mode shows full cast management with add/remove, role names, and photo upload with styled file button
+- **MovieListingPage** — public page to browse all movies in a responsive grid. Genre filter dropdown filters client-side by checking each movie's `genreIds` array. Movie cards link to detail page using slug URLs
+- **MovieDetailPage** — movie detail page with side-by-side layout: poster on left, title + genre badges + metadata grid (duration, release date, language, director) + description on right, followed by cast grid with round photo avatars and character names
 
 ---
 
@@ -142,11 +185,30 @@ Auto-seeded on startup:
 |-----------------|-------------|-------------------|
 | id              | BIGSERIAL   | PRIMARY KEY       |
 | title           | VARCHAR(255)| NOT NULL          |
+| slug            | VARCHAR(255)| UNIQUE, NOT NULL  |
 | description     | TEXT        |                   |
 | poster_url      | VARCHAR(500)|                   |
-| genre_id        | BIGINT      | FK → genres(id)   |
 | duration_minutes| INT         | NOT NULL          |
+| release_date    | DATE        |                   |
+| original_language| VARCHAR(10)|                   |
+| director        | VARCHAR(255)|                   |
 | created_at      | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP |
+
+### movie_genres
+| Column   | Type   | Constraint                |
+|----------|--------|---------------------------|
+| id       | BIGSERIAL | PRIMARY KEY             |
+| movie_id | BIGINT | FK → movies(id) ON DELETE CASCADE |
+| genre_id | BIGINT | FK → genres(id) ON DELETE CASCADE |
+
+### screens
+| Column      | Type         | Constraint        |
+|-------------|-------------|-------------------|
+| id          | BIGSERIAL   | PRIMARY KEY       |
+| name        | VARCHAR(50) | NOT NULL          |
+| screen_type | VARCHAR(20) | NOT NULL          |
+| total_seats | INT         | NOT NULL          |
+| seats_per_row | INT       | NOT NULL, DEFAULT 15 |
 
 ### showtimes
 | Column        | Type           | Constraint        |
@@ -226,16 +288,16 @@ Auto-seeded on startup:
 ### Movies
 | Method | Endpoint                   | Access         | Description            |
 |--------|----------------------------|----------------|------------------------|
-| GET    | /api/movies                | Public         | List all movies        |
-| GET    | /api/movies/{id}           | Public         | Get movie details + cast |
-| POST   | /api/admin/movies          | ADMIN          | Create movie           |
+| GET    | /api/movies                | Public         | List all movies (with slug) |
+| GET    | /api/movies/{slug}         | Public         | Get movie details + cast by slug |
+| POST   | /api/admin/movies          | ADMIN          | Create movie (with genreIds) |
 | PUT    | /api/admin/movies/{id}     | ADMIN          | Update movie           |
 | DELETE | /api/admin/movies/{id}     | ADMIN          | Delete movie           |
 | POST   | /api/admin/movies/{id}/poster | ADMIN       | Upload movie poster (multipart) |
 | POST   | /api/admin/movies/{movieId}/cast | ADMIN    | Add actor to movie cast |
 | DELETE | /api/admin/movies/{movieId}/cast/{castId} | ADMIN | Remove cast member |
 
-### Actors
+### Actors (API Only — No Frontend UI)
 | Method | Endpoint                | Access         | Description          |
 |--------|-------------------------|----------------|----------------------|
 | GET    | /api/actors             | Public         | List all actors      |
@@ -243,11 +305,24 @@ Auto-seeded on startup:
 | PUT    | /api/admin/actors/{id}  | ADMIN          | Update actor         |
 | DELETE | /api/admin/actors/{id}  | ADMIN          | Delete actor         |
 
+> Note: Actors are managed through the movie cast flow in the admin UI (`AdminMovieForm`). These backend endpoints exist for programmatic/API access only.
+
+### Screens
+| Method | Endpoint                | Access         | Description          |
+|--------|-------------------------|----------------|----------------------|
+| GET    | /api/screens            | Public         | List all cinema screens |
+
+> Note: Screens are seeded on startup (2 small, 2 medium, 2 large). No admin CRUD — fixed cinema layout.
+
+### Showtimes
+| Method | Endpoint                              | Access         | Description                    |
+|--------|---------------------------------------|----------------|--------------------------------|
+| GET    | /api/showtimes?movieId={id}           | Public         | List showtimes for a movie     |
+| POST   | /api/admin/showtimes                  | ADMIN          | Create showtime + generate seats |
+
 ### Planned
 | Method | Endpoint                      | Access        | Description               |
 |--------|-------------------------------|---------------|---------------------------|
-| GET    | /api/showtimes?movieId={id}   | Public        | List showtimes by movie   |
-| POST   | /api/admin/showtimes          | ADMIN         | Create showtime           |
 | GET    | /api/showtimes/{id}/seats     | Public        | Get seat layout           |
 | POST   | /api/reservations             | Authenticated | Create reservation        |
 | GET    | /api/reservations/my          | Authenticated | Get user's reservations   |
@@ -259,17 +334,21 @@ Auto-seeded on startup:
 
 ```
 Frontend (React 19 + Vite 8)
+  └─ Lenis (smooth scroll)
   └─ axios instance (utils/api.js)
        └─ baseURL: /api
-            └─ Vite proxy → http://localhost:8080
+            └─ Vite dev proxy → http://localhost:8080
+       └─ /uploads proxy → http://localhost:8080
 
 Backend (Spring Boot 4.0.7)
   └─ SecurityConfig (stateless, CORS, role-based)
        └─ JwtAuthFilter (extracts/validates Bearer token)
             └─ Controller → Service → Repository (JdbcTemplate)
                  └─ PostgreSQL
+  └─ FileStorageService (safe file deletion for uploads)
+  └─ WebConfig (serves uploads/ as static resources)
 ```
 
 ## Project Status
 
-**Work in progress.** Auth flow, movie CRUD with poster upload, genre CRUD, actor/cast management, and all admin CRUD frontend pages are complete. Public movie listing and detail pages are next (Friday Week 1). Showtime, seat selection, and reservation features are planned for Weeks 2-3.
+**Work in progress.** Auth flow, genre CRUD, movie CRUD with poster upload and multi-genre support, actor/cast management with photos, public movie listing with genre filter, movie detail page with cast photos, slug-based URLs, Cinema Noir dark theme with Netflix-style hero banner, smooth scrolling, responsive layouts, file cleanup on delete/replace, 6 cinema screens (seeded), and showtime creation with auto seat generation are all complete. Seat selection UI, reservation booking, and cancel flow are planned for Weeks 2-3.
