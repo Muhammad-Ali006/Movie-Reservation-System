@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Clock, Globe, Calendar, Clapperboard, Ticket, Monitor } from 'lucide-react'
+import { ArrowLeft, Clock, Globe, Calendar, Clapperboard, Ticket, Monitor, ChevronRight } from 'lucide-react'
 import api from '../utils/api'
 
 function MovieDetailPage() {
@@ -208,9 +208,10 @@ function MovieDetailPage() {
               {/* Showtime Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredShowtimes.map(showtime => (
-                  <div
+                  <Link
                     key={showtime.id}
-                    className="rounded-lg p-4 transition-all"
+                    to={`/booking/${showtime.id}`}
+                    className="rounded-lg p-4 transition-all block"
                     style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
@@ -234,7 +235,11 @@ function MovieDetailPage() {
                         <span>{showtime.availableSeats} / {showtime.totalSeats} seats available</span>
                       </div>
                     </div>
-                  </div>
+
+                    <div className="mt-3 flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--color-primary)' }}>
+                      Select Seats <ChevronRight className="w-3 h-3" />
+                    </div>
+                  </Link>
                 ))}
               </div>
             </>

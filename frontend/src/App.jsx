@@ -11,6 +11,7 @@ import AdminMoviePage from './pages/AdminMoviePage'
 import AdminMovieForm from './pages/AdminMovieForm'
 import MovieListingPage from './pages/MovieListingPage'
 import MovieDetailPage from './pages/MovieDetailPage'
+import SeatSelectionPage from './pages/SeatSelectionPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -30,6 +31,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<MovieListingPage />} />
           <Route path="/movies/:slug" element={<MovieDetailPage />} />
+          <Route path="/booking/:showtimeId" element={<SeatSelectionPage />} />
           <Route
             path="/login"
             element={token ? <Navigate to="/" replace /> : <Login />}
