@@ -109,9 +109,12 @@ npm run dev
 - **Admin showtime creation** — `POST /api/admin/showtimes` accepts movieId, screenId, showDate, showTime, pricePerSeat
 - **Auto seat generation** — when a showtime is created, seats are automatically generated based on the screen's capacity (e.g. Screen 5 → 180 seats → 12 rows × 15)
 - **Public showtime listing** — `GET /api/showtimes?movieId={id}` returns all showtimes for a movie with screen name, available seat count, and price
+- **Seat layout endpoint** — `GET /api/showtimes/{showtimeId}/seats` returns all seats with `id`, `seatNumber`, `rowLabel`, and `status` ("AVAILABLE" / "BOOKED")
 
 ### Backend Architecture
 - **Layered pattern** — `controller → service → repository (JdbcTemplate)` with manual `RowMapper`
+- **Movie filtering/sorting/pagination** — `MovieRepository` supports filtered queries by genre and availability (has showtimes or not), with server-side sorting and LIMIT/OFFSET pagination. Returns `{ content, totalPages, totalElements, currentPage, size }`
+- **PostgreSQL 18 compatibility** — JDBC prepared statements with BIGINT columns reject implicit VARCHAR-to-BIGINT conversion. All genre ID queries use `Long` instead of `String` to avoid `operator does not exist: bigint = character varying`
 - **File storage** — `FileStorageService` handles safe file deletion for poster/photo replacements and movie deletions (skips nulls, external URLs, and defaults; logs at INFO level)
 - **Global exception handler** — returns structured JSON errors:
   - `404` — `ResourceNotFoundException`
@@ -122,7 +125,7 @@ npm run dev
 
 ### UI & Design
 - **Cinema Noir theme** — dark color palette (`#0A0A0A` background, `#141414` surface, `#E50914` primary red, `#FFC107` gold accent) defined as CSS custom properties in `index.css` for easy palette swaps
-- **Netflix-style hero banner** — full-viewport home page with background cinema image (`public/cinema.jpeg`), multi-layer gradient overlay (left-to-right + bottom-to-top) for text readability over the image
+- **Netflix-style hero banner** — full-viewport home page with background cinema image (`public/cinema-background.jpeg`), multi-layer gradient overlay (left-to-right + bottom-to-top) for text readability over the image
 - **Transparent navbar** — gradient overlay navbar that sits on top of the hero banner, with `position: absolute` so the hero extends behind it
 - **Lenis smooth scroll** — initialized in `App.jsx` for buttery smooth scrolling across all pages
 - **Lucide React icons** — used throughout the app for consistent, lightweight iconography (Film, LogIn, LogOut, UserPlus, Shield, ArrowLeft, Clock, Globe, etc.)
@@ -147,8 +150,9 @@ npm run dev
   - Multi-genre toggleable checkboxes (not a dropdown)
   - Styled poster file upload button with image preview
   - Cast section: in create mode shows info message ("Cast can be added after creating the movie"); in edit mode shows full cast management with add/remove, role names, and photo upload with styled file button
-- **MovieListingPage** — public page to browse all movies in a responsive grid. Genre filter dropdown filters client-side by checking each movie's `genreIds` array. Movie cards link to detail page using slug URLs
-- **MovieDetailPage** — movie detail page with side-by-side layout: poster on left, title + genre badges + metadata grid (duration, release date, language, director) + description on right, followed by cast grid with round photo avatars and character names
+- **MovieListingPage** — public page with three tabs: "Now Showing" (movies with future showtimes), "Coming Soon" (no showtimes yet), "All Movies". Each tab supports server-side genre filter, sort (Newest, Title A-Z, Release Date, Duration), and pagination (6 per page). Movie cards show "NOW SHOWING" / "COMING SOON" badges and link to detail page using slug URLs
+- **MovieDetailPage** — movie detail page with side-by-side layout: poster on left, title + genre badges + metadata grid (duration, release date, language, director) + description on right, followed by cast grid with round photo avatars and character names. Includes a showtime section with date picker tabs and time cards showing screen name, screen type, available seats, and price. Each showtime card links to the seat selection page
+- **SeatSelectionPage** — interactive seat grid at `/booking/:showtimeId`. Seats grouped by row (A, B, C...), color-coded (green=AVAILABLE, gray=BOOKED, red=selected). Click to select/deselect, legend, "Continue" button navigates to booking confirmation
 
 ---
 
@@ -288,7 +292,7 @@ Auto-seeded on startup:
 ### Movies
 | Method | Endpoint                   | Access         | Description            |
 |--------|----------------------------|----------------|------------------------|
-| GET    | /api/movies                | Public         | List all movies (with slug) |
+| GET    | /api/movies?genreId=&sortBy=&sortDir=&availability=&page=&size= | Public         | List movies with filtering, sorting, and pagination (returns `{ content, totalPages, totalElements, currentPage, size }`) |
 | GET    | /api/movies/{slug}         | Public         | Get movie details + cast by slug |
 | POST   | /api/admin/movies          | ADMIN          | Create movie (with genreIds) |
 | PUT    | /api/admin/movies/{id}     | ADMIN          | Update movie           |
@@ -318,15 +322,15 @@ Auto-seeded on startup:
 | Method | Endpoint                              | Access         | Description                    |
 |--------|---------------------------------------|----------------|--------------------------------|
 | GET    | /api/showtimes?movieId={id}           | Public         | List showtimes for a movie     |
+| GET    | /api/showtimes/{showtimeId}/seats     | Public         | Get seat layout with status    |
 | POST   | /api/admin/showtimes                  | ADMIN          | Create showtime + generate seats |
 
-### Planned
-| Method | Endpoint                      | Access        | Description               |
-|--------|-------------------------------|---------------|---------------------------|
-| GET    | /api/showtimes/{id}/seats     | Public        | Get seat layout           |
-| POST   | /api/reservations             | Authenticated | Create reservation        |
-| GET    | /api/reservations/my          | Authenticated | Get user's reservations   |
-| DELETE | /api/reservations/{id}        | Authenticated | Cancel reservation        |
+### Up Next
+| Method | Endpoint                      | Access        | Description               | Planned  |
+|--------|-------------------------------|---------------|---------------------------|----------|
+| POST   | /api/reservations             | Authenticated | Create reservation        | Thu W2   |
+| GET    | /api/reservations/my          | Authenticated | Get user's reservations   | Fri W2   |
+| DELETE | /api/reservations/{id}        | Authenticated | Cancel reservation        | Fri W2   |
 
 ---
 
@@ -351,4 +355,4 @@ Backend (Spring Boot 4.0.7)
 
 ## Project Status
 
-**Work in progress.** Auth flow, genre CRUD, movie CRUD with poster upload and multi-genre support, actor/cast management with photos, public movie listing with genre filter, movie detail page with cast photos, slug-based URLs, Cinema Noir dark theme with Netflix-style hero banner, smooth scrolling, responsive layouts, file cleanup on delete/replace, 6 cinema screens (seeded), and showtime creation with auto seat generation are all complete. Seat selection UI, reservation booking, and cancel flow are planned for Weeks 2-3.
+**Work in progress.** Auth flow, genre CRUD, movie CRUD with poster/cast, public movie listing with genre filter, movie detail page, Cinema Noir dark theme, smooth scrolling, responsive layouts, file cleanup, 6 cinema screens, showtime creation with auto seat generation, tab-based movie listing with server-side filtering/sorting/pagination, showtime date picker on movie detail page, seat layout endpoint, and visual seat selection grid are all complete. Reservation booking (Thu W2), booking confirmation page, and cancel flow (Fri W2) are next.
