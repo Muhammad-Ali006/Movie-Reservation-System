@@ -1,6 +1,8 @@
 package com.movie.reservation.controller;
 
+import com.movie.reservation.exception.ResourceNotFoundException;
 import com.movie.reservation.model.Screen;
+import com.movie.reservation.model.Seat;
 import com.movie.reservation.model.Showtime;
 import com.movie.reservation.repository.ScreenRepository;
 import com.movie.reservation.repository.SeatRepository;
@@ -49,6 +51,26 @@ public class ShowtimeController {
             item.put("availableSeats", availableSeats);
             item.put("pricePerSeat", showtime.getPricePerSeat());
 
+            result.add(item);
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{showtimeId}/seats")
+    public ResponseEntity<List<Map<String, Object>>> getSeatsByShowtime(@PathVariable Long showtimeId) {
+        showtimeRepository.findById(showtimeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
+
+        List<Seat> seats = seatRepository.findByShowtimeId(showtimeId);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Seat seat : seats) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", seat.getId());
+            item.put("seatNumber", seat.getSeatNumber());
+            item.put("rowLabel", seat.getRowLabel());
+            item.put("status", seat.isAvailable() ? "AVAILABLE" : "BOOKED");
             result.add(item);
         }
 
