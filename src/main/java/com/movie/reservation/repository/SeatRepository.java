@@ -43,4 +43,18 @@ public class SeatRepository {
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, showtimeId);
         return count != null ? count : 0;
     }
+
+    public void markSeatsUnavailable(List<Long> seatIds) {
+        String sql = "UPDATE seats SET is_available = false WHERE id = ?";
+        for (Long seatId : seatIds) {
+            jdbcTemplate.update(sql, seatId);
+        }
+    }
+
+    public void makeSeatsAvailable(List<Long> seatIds) {
+        String sql = "UPDATE seats SET is_available = true WHERE id = ?";
+        for (Long seatId : seatIds) {
+            jdbcTemplate.update(sql, seatId);
+        }
+    }
 }
