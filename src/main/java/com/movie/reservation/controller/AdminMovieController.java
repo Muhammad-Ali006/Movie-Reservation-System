@@ -10,6 +10,8 @@ import com.movie.reservation.repository.MovieCastRepository;
 import com.movie.reservation.repository.MovieRepository;
 import com.movie.reservation.service.FileStorageService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,15 +32,18 @@ public class AdminMovieController {
     private final ActorRepository actorRepository;
     private final MovieCastRepository movieCastRepository;
     private final FileStorageService fileStorageService;
+    private final JdbcTemplate jdbcTemplate;
 
     public AdminMovieController(MovieRepository movieRepository,
                                  ActorRepository actorRepository,
                                  MovieCastRepository movieCastRepository,
-                                 FileStorageService fileStorageService) {
+                                 FileStorageService fileStorageService,
+                                 JdbcTemplate jdbcTemplate) {
         this.movieRepository = movieRepository;
         this.actorRepository = actorRepository;
         this.movieCastRepository = movieCastRepository;
         this.fileStorageService = fileStorageService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @PostMapping
@@ -85,12 +90,50 @@ public class AdminMovieController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Map<String, String>> deleteMovie(@PathVariable Long id) {
-        Movie movie = movieRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+        if (!movieRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Movie not found");
+        }
 
-        fileStorageService.deletePoster(movie.getPosterUrl());
+        Integer activeCount = jdbcTemplate.queryForObject("""
+            SELECT COUNT(DISTINCT r.id) FROM reservations r
+            JOIN reservation_seats rs ON r.id = rs.reservation_id
+            JOIN seats t ON rs.seat_id = t.id
+            JOIN showtimes s ON t.showtime_id = s.id
+            WHERE s.movie_id = ? AND r.status = 'CONFIRMED'
+        """, Integer.class, id);
 
+        if (activeCount != null && activeCount > 0) {
+            throw new IllegalArgumentException(
+                "Cannot delete movie: " + activeCount + " active booking(s) exist. Cancel them first."
+            );
+        }
+
+        Movie movie = movieRepository.findById(id).orElse(null);
+        if (movie != null) {
+            fileStorageService.deletePoster(movie.getPosterUrl());
+        }
+
+        jdbcTemplate.update("""
+            DELETE FROM reservation_seats WHERE seat_id IN (
+                SELECT t.id FROM seats t JOIN showtimes s ON t.showtime_id = s.id WHERE s.movie_id = ?
+            )
+        """, id);
+
+        jdbcTemplate.update("""
+            DELETE FROM reservations WHERE id IN (
+                SELECT DISTINCT rs.reservation_id FROM reservation_seats rs
+                JOIN seats t ON rs.seat_id = t.id
+                JOIN showtimes s ON t.showtime_id = s.id
+                WHERE s.movie_id = ?
+            )
+        """, id);
+
+        jdbcTemplate.update("DELETE FROM seats WHERE showtime_id IN (SELECT id FROM showtimes WHERE movie_id = ?)", id);
+        jdbcTemplate.update("DELETE FROM showtimes WHERE movie_id = ?", id);
+        jdbcTemplate.update("DELETE FROM movie_genres WHERE movie_id = ?", id);
+        jdbcTemplate.update("DELETE FROM movie_cast WHERE movie_id = ?", id);
         movieRepository.deleteById(id);
 
         Map<String, String> response = new HashMap<>();
