@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams, useLocation, useNavigate, Link } from 'react-router-dom'
+import { useParams, useLocation, Link } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import api from '../utils/api'
 
 function BookingConfirmationPage() {
   const { showtimeId } = useParams()
   const location = useLocation()
-  const navigate = useNavigate()
   const selectedSeats = location.state?.selectedSeats || []
 
   const [showtime, setShowtime] = useState(null)
