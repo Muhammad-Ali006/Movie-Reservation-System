@@ -21,11 +21,6 @@ public class MovieRepository {
 
     private final RowMapper<Movie> movieRowMapper = (rs, rowNum) -> mapMovie(rs);
 
-    public List<Movie> findAll() {
-        String sql = "SELECT * FROM movies ORDER BY created_at DESC";
-        return jdbcTemplate.query(sql, movieRowMapper);
-    }
-
     public List<Movie> findAllFiltered(Long genreId, String sortBy, String sortDir, String availability, int offset, int limit) {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT m.* FROM movies m");
 
