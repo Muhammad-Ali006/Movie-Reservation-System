@@ -43,10 +43,6 @@ public class MovieCastRepository {
         jdbcTemplate.update(sql, movieId, actorId, roleName);
     }
 
-    public void deleteByMovieId(Long movieId) {
-        jdbcTemplate.update("DELETE FROM movie_cast WHERE movie_id = ?", movieId);
-    }
-
     public void deleteById(Long id) {
         jdbcTemplate.update("DELETE FROM movie_cast WHERE id = ?", id);
     }
