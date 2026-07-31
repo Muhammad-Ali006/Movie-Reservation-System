@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS showtimes (
     movie_id BIGINT REFERENCES movies(id),
     show_date DATE NOT NULL,
     show_time TIME NOT NULL,
-    screen_number INT NOT NULL,
+    screen_number BIGINT NOT NULL REFERENCES screens(id),
     total_seats INT NOT NULL,
     price_per_seat DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
