@@ -5,7 +5,6 @@ import com.movie.reservation.dto.request.SignupRequest;
 import com.movie.reservation.dto.response.AuthResponse;
 import com.movie.reservation.model.User;
 import com.movie.reservation.service.AuthService;
-import com.movie.reservation.util.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
