@@ -32,10 +32,6 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String extractUsername(String token) {
-        return parseClaims(token).getSubject();
-    }
-
     public Long extractUserId(String token) {
         return parseClaims(token).get("userId", Long.class);
     }
