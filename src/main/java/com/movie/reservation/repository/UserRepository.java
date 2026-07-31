@@ -33,12 +33,6 @@ public class UserRepository {
         return users.stream().findFirst();
     }
 
-    public Optional<User> findByEmail(String email) {
-        String sql = "SELECT * FROM users WHERE email = ?";
-        var users = jdbcTemplate.query(sql, userRowMapper, email);
-        return users.stream().findFirst();
-    }
-
     public Optional<User> findById(Long id) {
         String sql = "SELECT * FROM users WHERE id = ?";
         var users = jdbcTemplate.query(sql, userRowMapper, id);
