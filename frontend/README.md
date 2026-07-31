@@ -1,16 +1,21 @@
-# React + Vite
+# Movie Reservation — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 single-page app for the Movie Reservation System. Built with Vite 8, Tailwind CSS 4 (Cinema Noir dark theme), React Router 7, and Axios.
 
-Currently, two official plugins are available:
+See the [root README](../README.md) for the full project documentation (architecture, API, schema, admin guide).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Getting started
 
-## React Compiler
+```bash
+npm install
+npm run dev      # start Vite dev server on http://localhost:5173
+npm run build    # production build to dist/
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The dev server proxies `/api` and `/uploads` to the Spring Boot backend on port 8080 (configured in `vite.config.js`), so no CORS setup is needed during development.
 
-## Expanding the Oxlint configuration
+## Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- `src/pages/` — public pages (movie listing, movie detail, seat selection, booking confirmation, login/signup) and admin pages (dashboard, genres, movies, showtimes, reservations)
+- `src/components/` — shared UI: `Navbar`, `ProtectedRoute`, `AdminRoute`
+- `src/api.js` — Axios client with JWT injection and 401 auto-logout

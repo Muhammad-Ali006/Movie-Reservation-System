@@ -10,6 +10,8 @@ import com.movie.reservation.repository.ScreenRepository;
 import com.movie.reservation.repository.SeatRepository;
 import com.movie.reservation.repository.ShowtimeRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -25,15 +27,18 @@ public class AdminShowtimeController {
     private final ScreenRepository screenRepository;
     private final SeatRepository seatRepository;
     private final MovieRepository movieRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public AdminShowtimeController(ShowtimeRepository showtimeRepository,
                                     ScreenRepository screenRepository,
                                     SeatRepository seatRepository,
-                                    MovieRepository movieRepository) {
+                                    MovieRepository movieRepository,
+                                    JdbcTemplate jdbcTemplate) {
         this.showtimeRepository = showtimeRepository;
         this.screenRepository = screenRepository;
         this.seatRepository = seatRepository;
         this.movieRepository = movieRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @PostMapping
@@ -86,6 +91,32 @@ public class AdminShowtimeController {
         response.put("pricePerSeat", saved.getPricePerSeat());
         response.put("seatsGenerated", seats.size());
 
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> deleteShowtime(@PathVariable Long id) {
+        Showtime showtime = showtimeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
+
+        Integer activeCount = jdbcTemplate.queryForObject("""
+            SELECT COUNT(*) FROM reservations WHERE showtime_id = ? AND status = 'CONFIRMED'
+        """, Integer.class, id);
+
+        if (activeCount != null && activeCount > 0) {
+            throw new IllegalArgumentException(
+                "Cannot delete showtime: " + activeCount + " active booking(s) exist. Cancel them first."
+            );
+        }
+
+        jdbcTemplate.update("DELETE FROM reservation_seats WHERE seat_id IN (SELECT id FROM seats WHERE showtime_id = ?)", id);
+        jdbcTemplate.update("DELETE FROM reservations WHERE showtime_id = ?", id);
+        jdbcTemplate.update("DELETE FROM seats WHERE showtime_id = ?", id);
+        showtimeRepository.deleteById(id);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Showtime deleted successfully");
         return ResponseEntity.ok(response);
     }
 }

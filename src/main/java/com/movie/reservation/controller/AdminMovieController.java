@@ -97,11 +97,9 @@ public class AdminMovieController {
         }
 
         Integer activeCount = jdbcTemplate.queryForObject("""
-            SELECT COUNT(DISTINCT r.id) FROM reservations r
-            JOIN reservation_seats rs ON r.id = rs.reservation_id
-            JOIN seats t ON rs.seat_id = t.id
-            JOIN showtimes s ON t.showtime_id = s.id
-            WHERE s.movie_id = ? AND r.status = 'CONFIRMED'
+            SELECT COUNT(*) FROM reservations
+            WHERE showtime_id IN (SELECT id FROM showtimes WHERE movie_id = ?)
+            AND status = 'CONFIRMED'
         """, Integer.class, id);
 
         if (activeCount != null && activeCount > 0) {
@@ -111,9 +109,7 @@ public class AdminMovieController {
         }
 
         Movie movie = movieRepository.findById(id).orElse(null);
-        if (movie != null) {
-            fileStorageService.deletePoster(movie.getPosterUrl());
-        }
+        String posterUrl = (movie != null) ? movie.getPosterUrl() : null;
 
         jdbcTemplate.update("""
             DELETE FROM reservation_seats WHERE seat_id IN (
@@ -122,12 +118,7 @@ public class AdminMovieController {
         """, id);
 
         jdbcTemplate.update("""
-            DELETE FROM reservations WHERE id IN (
-                SELECT DISTINCT rs.reservation_id FROM reservation_seats rs
-                JOIN seats t ON rs.seat_id = t.id
-                JOIN showtimes s ON t.showtime_id = s.id
-                WHERE s.movie_id = ?
-            )
+            DELETE FROM reservations WHERE showtime_id IN (SELECT id FROM showtimes WHERE movie_id = ?)
         """, id);
 
         jdbcTemplate.update("DELETE FROM seats WHERE showtime_id IN (SELECT id FROM showtimes WHERE movie_id = ?)", id);
@@ -135,6 +126,10 @@ public class AdminMovieController {
         jdbcTemplate.update("DELETE FROM movie_genres WHERE movie_id = ?", id);
         jdbcTemplate.update("DELETE FROM movie_cast WHERE movie_id = ?", id);
         movieRepository.deleteById(id);
+
+        if (posterUrl != null) {
+            fileStorageService.deletePoster(posterUrl);
+        }
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Movie deleted successfully");

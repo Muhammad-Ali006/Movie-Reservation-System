@@ -12,6 +12,9 @@ import AdminMovieForm from './pages/AdminMovieForm'
 import MovieListingPage from './pages/MovieListingPage'
 import MovieDetailPage from './pages/MovieDetailPage'
 import SeatSelectionPage from './pages/SeatSelectionPage'
+import BookingConfirmationPage from './pages/BookingConfirmationPage'
+import AdminShowtimePage from './pages/AdminShowtimePage'
+import AdminReservationPage from './pages/AdminReservationPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -32,6 +35,7 @@ function App() {
           <Route path="/movies" element={<MovieListingPage />} />
           <Route path="/movies/:slug" element={<MovieDetailPage />} />
           <Route path="/booking/:showtimeId" element={<SeatSelectionPage />} />
+          <Route path="/booking/:showtimeId/confirm" element={<BookingConfirmationPage />} />
           <Route
             path="/login"
             element={token ? <Navigate to="/" replace /> : <Login />}
@@ -53,6 +57,22 @@ function App() {
             element={
               <AdminRoute>
                 <AdminGenrePage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/showtimes"
+            element={
+              <AdminRoute>
+                <AdminShowtimePage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/reservations"
+            element={
+              <AdminRoute>
+                <AdminReservationPage />
               </AdminRoute>
             }
           />

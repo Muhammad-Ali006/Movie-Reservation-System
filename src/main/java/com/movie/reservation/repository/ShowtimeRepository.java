@@ -42,6 +42,11 @@ public class ShowtimeRepository {
                 showtime.getShowDate(), showtime.getShowTime(), showtime.getScreenNumber());
     }
 
+    public void deleteById(Long id) {
+        String sql = "DELETE FROM showtimes WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
     private Showtime mapShowtime(ResultSet rs) throws SQLException {
         Showtime showtime = new Showtime();
         showtime.setId(rs.getLong("id"));

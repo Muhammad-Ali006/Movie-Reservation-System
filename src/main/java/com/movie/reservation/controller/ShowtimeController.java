@@ -1,9 +1,11 @@
 package com.movie.reservation.controller;
 
 import com.movie.reservation.exception.ResourceNotFoundException;
+import com.movie.reservation.model.Movie;
 import com.movie.reservation.model.Screen;
 import com.movie.reservation.model.Seat;
 import com.movie.reservation.model.Showtime;
+import com.movie.reservation.repository.MovieRepository;
 import com.movie.reservation.repository.ScreenRepository;
 import com.movie.reservation.repository.SeatRepository;
 import com.movie.reservation.repository.ShowtimeRepository;
@@ -22,13 +24,16 @@ public class ShowtimeController {
     private final ShowtimeRepository showtimeRepository;
     private final ScreenRepository screenRepository;
     private final SeatRepository seatRepository;
+    private final MovieRepository movieRepository;
 
     public ShowtimeController(ShowtimeRepository showtimeRepository,
                                ScreenRepository screenRepository,
-                               SeatRepository seatRepository) {
+                               SeatRepository seatRepository,
+                               MovieRepository movieRepository) {
         this.showtimeRepository = showtimeRepository;
         this.screenRepository = screenRepository;
         this.seatRepository = seatRepository;
+        this.movieRepository = movieRepository;
     }
 
     @GetMapping
@@ -73,6 +78,32 @@ public class ShowtimeController {
             item.put("status", seat.isAvailable() ? "AVAILABLE" : "BOOKED");
             result.add(item);
         }
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{showtimeId}")
+    public ResponseEntity<Map<String, Object>> getShowtimeById(@PathVariable Long showtimeId) {
+        Showtime showtime = showtimeRepository.findById(showtimeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
+
+        Movie movie = movieRepository.findById(showtime.getMovieId()).orElse(null);
+        Screen screen = screenRepository.findById((long) showtime.getScreenNumber()).orElse(null);
+        int availableSeats = seatRepository.countAvailableByShowtimeId(showtimeId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", showtime.getId());
+        result.put("movieId", showtime.getMovieId());
+        result.put("movieTitle", movie != null ? movie.getTitle() : null);
+        result.put("movieSlug", movie != null ? movie.getSlug() : null);
+        result.put("showDate", showtime.getShowDate());
+        result.put("showTime", showtime.getShowTime());
+        result.put("screenNumber", showtime.getScreenNumber());
+        result.put("screenName", screen != null ? screen.getName() : "Screen " + showtime.getScreenNumber());
+        result.put("screenType", screen != null ? screen.getScreenType() : "UNKNOWN");
+        result.put("totalSeats", showtime.getTotalSeats());
+        result.put("availableSeats", availableSeats);
+        result.put("pricePerSeat", showtime.getPricePerSeat());
 
         return ResponseEntity.ok(result);
     }

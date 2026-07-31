@@ -1,11 +1,14 @@
 package com.movie.reservation.controller;
 
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.movie.reservation.repository.ReservationRepository;
+import com.movie.reservation.repository.SeatRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,13 +17,21 @@ import java.util.Map;
 public class AdminReservationController {
 
     private final JdbcTemplate jdbcTemplate;
+    private final ReservationRepository reservationRepository;
+    private final SeatRepository seatRepository;
 
-    public AdminReservationController(JdbcTemplate jdbcTemplate) {
+    public AdminReservationController(JdbcTemplate jdbcTemplate,
+                                       ReservationRepository reservationRepository,
+                                       SeatRepository seatRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.reservationRepository = reservationRepository;
+        this.seatRepository = seatRepository;
     }
 
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAllReservations() {
+    public ResponseEntity<List<Map<String, Object>>> getAllReservations(
+            @RequestParam(required = false) Long screenId) {
+        String whereClause = screenId != null ? "AND sc.id = ?" : "";
         String sql = """
             SELECT
                 r.id,
@@ -30,6 +41,7 @@ public class AdminReservationController {
                 u.username,
                 m.title AS movieTitle,
                 m.slug AS movieSlug,
+                sc.id AS screenId,
                 sc.name AS screenName,
                 s.show_date AS showDate,
                 s.show_time AS showTime,
@@ -41,10 +53,36 @@ public class AdminReservationController {
             JOIN screens sc ON sc.id = s.screen_number
             JOIN reservation_seats rs ON r.id = rs.reservation_id
             JOIN seats t ON rs.seat_id = t.id
-            GROUP BY r.id, u.username, m.title, m.slug, sc.name, s.show_date, s.show_time
+            WHERE 1=1 %s
+            GROUP BY r.id, u.username, m.title, m.slug, sc.id, sc.name, s.show_date, s.show_time
             ORDER BY s.show_date DESC, s.show_time DESC, r.id DESC
-        """;
-        List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
+        """.formatted(whereClause);
+
+        List<Map<String, Object>> result;
+        if (screenId != null) {
+            result = jdbcTemplate.queryForList(sql, screenId);
+        } else {
+            result = jdbcTemplate.queryForList(sql);
+        }
         return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/bulk-cancel")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> bulkCancel(@RequestBody List<Long> ids) {
+        int count = 0;
+        for (Long id : ids) {
+            var opt = reservationRepository.findById(id);
+            if (opt.isPresent() && "CONFIRMED".equals(opt.get().getStatus())) {
+                List<Long> seatIds = reservationRepository.findSeatIdsByReservationId(id);
+                seatRepository.makeSeatsAvailable(seatIds);
+                reservationRepository.cancelReservation(id, LocalDateTime.now());
+                count++;
+            }
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("cancelledCount", count);
+        return ResponseEntity.ok(response);
     }
 }

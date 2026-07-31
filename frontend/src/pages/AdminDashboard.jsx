@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Palette, Film } from 'lucide-react'
+import { Palette, Film, CalendarClock, CalendarX2 } from 'lucide-react'
 
 function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem('user') || 'null')
@@ -36,6 +36,32 @@ function AdminDashboard() {
             <h2 className="text-xl font-semibold" style={{ color: 'var(--color-primary)' }}>Movies</h2>
           </div>
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Manage movies, posters, cast, and genres</p>
+        </Link>
+
+        <Link
+          to="/admin/showtimes"
+          className="rounded-lg p-6 transition-all"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--color-primary)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-border)'}>
+          <div className="flex items-center gap-3 mb-2">
+            <CalendarClock className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--color-primary)' }}>Showtimes</h2>
+          </div>
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Create showtimes for movies</p>
+        </Link>
+
+        <Link
+          to="/admin/reservations"
+          className="rounded-lg p-6 transition-all"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--color-primary)'}
+          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--color-border)'}>
+          <div className="flex items-center gap-3 mb-2">
+            <CalendarX2 className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--color-primary)' }}>Bookings</h2>
+          </div>
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>View and cancel reservations</p>
         </Link>
       </div>
     </div>
