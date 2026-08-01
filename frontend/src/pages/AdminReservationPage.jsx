@@ -59,16 +59,10 @@ function AdminReservationPage() {
     if (!window.confirm(`Cancel all ${confirmedIds.length} bookings for ${screenName}?`)) return
     setCancellingAll(true)
     try {
-      const res = await api.put('/admin/reservations/bulk-cancel', confirmedIds)
-      const cancelled = res.data.cancelledCount
+      await api.put('/admin/reservations/bulk-cancel', confirmedIds)
       setReservations(prev => prev.map(r =>
         confirmedIds.includes(r.id) ? { ...r, status: 'CANCELLED' } : r
       ))
-      if (cancelled > 0) {
-        setReservations(prev => prev.map(r =>
-          r.status === 'CANCELLED' ? r : r
-        ))
-      }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to cancel all')
     } finally {
