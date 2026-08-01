@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate, Link, Navigate } from 'react-router-dom'
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom'
 import { LogIn, AlertCircle } from 'lucide-react'
 import api from '../utils/api'
 
 function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [formData, setFormData] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,7 +30,7 @@ function Login() {
       const { token, user } = response.data
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
-      navigate('/')
+      navigate(location.state?.from || '/')
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid credentials')
     } finally {
