@@ -34,8 +34,22 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<MovieListingPage />} />
           <Route path="/movies/:slug" element={<MovieDetailPage />} />
-          <Route path="/booking/:showtimeId" element={<SeatSelectionPage />} />
-          <Route path="/booking/:showtimeId/confirm" element={<BookingConfirmationPage />} />
+          <Route
+            path="/booking/:showtimeId"
+            element={
+              <ProtectedRoute>
+                <SeatSelectionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/booking/:showtimeId/confirm"
+            element={
+              <ProtectedRoute>
+                <BookingConfirmationPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/login"
             element={token ? <Navigate to="/" replace /> : <Login />}
