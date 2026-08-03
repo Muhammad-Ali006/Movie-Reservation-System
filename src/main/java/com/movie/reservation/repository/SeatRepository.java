@@ -31,6 +31,11 @@ public class SeatRepository {
         return jdbcTemplate.query(sql, seatRowMapper, showtimeId);
     }
 
+    public List<Seat> findByShowtimeIdForUpdate(Long showtimeId) {
+        String sql = "SELECT * FROM seats WHERE showtime_id = ? ORDER BY row_label ASC, seat_number ASC FOR UPDATE";
+        return jdbcTemplate.query(sql, seatRowMapper, showtimeId);
+    }
+
     public void saveAll(List<Seat> seats) {
         String sql = "INSERT INTO seats (showtime_id, seat_number, row_label, is_available) VALUES (?, ?, ?, ?)";
         for (Seat seat : seats) {
