@@ -101,7 +101,7 @@ public class AdminShowtimeController {
                 .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
 
         Integer activeCount = jdbcTemplate.queryForObject("""
-            SELECT COUNT(*) FROM reservations WHERE showtime_id = ? AND status = 'CONFIRMED'
+            SELECT COUNT(*) FROM reservations WHERE showtime_id = ? AND status IN ('CONFIRMED', 'PENDING')
         """, Integer.class, id);
 
         if (activeCount != null && activeCount > 0) {
