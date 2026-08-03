@@ -73,9 +73,10 @@ public class AdminReservationController {
         int count = 0;
         for (Long id : ids) {
             var opt = reservationRepository.findById(id);
-            if (opt.isPresent() && "CONFIRMED".equals(opt.get().getStatus())) {
-                List<Long> seatIds = reservationRepository.findSeatIdsByReservationId(id);
+            if (opt.isPresent() && !"CANCELLED".equals(opt.get().getStatus())) {
+                List<Long> seatIds = reservationRepository.findActiveSeatIdsByReservationId(id);
                 seatRepository.makeSeatsAvailable(seatIds);
+                reservationRepository.deactivateSeatsByReservationId(id);
                 reservationRepository.cancelReservation(id, LocalDateTime.now());
                 count++;
             }
