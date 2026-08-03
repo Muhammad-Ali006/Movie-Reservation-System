@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Film, LogIn, LogOut, UserPlus, Shield, Menu, X } from 'lucide-react'
+import { Film, LogIn, LogOut, UserPlus, Shield, CalendarCheck, Menu, X } from 'lucide-react'
 
 function Navbar() {
   const navigate = useNavigate()
@@ -47,6 +47,13 @@ function Navbar() {
                 <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                   Hello, {user?.username || 'User'}
                 </span>
+                <Link to="/my-bookings" className="flex items-center gap-1 text-sm font-medium transition-colors"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}>
+                  <CalendarCheck className="w-4 h-4" />
+                  My Bookings
+                </Link>
                 {user?.role === 'ADMIN' && (
                   <Link to="/admin" className="flex items-center gap-1 text-sm font-medium transition-colors"
                     style={{ color: 'var(--color-text-secondary)' }}
@@ -108,6 +115,11 @@ function Navbar() {
               <div className="py-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 Hello, {user?.username || 'User'}
               </div>
+              <Link to="/my-bookings" onClick={closeMobile}
+                className="flex items-center gap-2 py-2 text-sm font-medium"
+                style={{ color: 'var(--color-text-secondary)' }}>
+                <CalendarCheck className="w-4 h-4" /> My Bookings
+              </Link>
               {user?.role === 'ADMIN' && (
                 <Link to="/admin" onClick={closeMobile}
                   className="flex items-center gap-2 py-2 text-sm font-medium"
