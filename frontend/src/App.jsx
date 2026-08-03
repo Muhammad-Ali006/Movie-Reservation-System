@@ -13,6 +13,7 @@ import MovieListingPage from './pages/MovieListingPage'
 import MovieDetailPage from './pages/MovieDetailPage'
 import SeatSelectionPage from './pages/SeatSelectionPage'
 import BookingConfirmationPage from './pages/BookingConfirmationPage'
+import UserReservationsPage from './pages/UserReservationsPage'
 import AdminShowtimePage from './pages/AdminShowtimePage'
 import AdminReservationPage from './pages/AdminReservationPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -43,10 +44,26 @@ function App() {
             }
           />
           <Route
+            path="/booking/:showtimeId/change"
+            element={
+              <ProtectedRoute>
+                <SeatSelectionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/booking/:showtimeId/confirm"
             element={
               <ProtectedRoute>
                 <BookingConfirmationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-bookings"
+            element={
+              <ProtectedRoute>
+                <UserReservationsPage />
               </ProtectedRoute>
             }
           />
