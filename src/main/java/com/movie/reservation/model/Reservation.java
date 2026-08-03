@@ -11,10 +11,11 @@ public class Reservation {
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;
     private LocalDateTime cancelledAt;
+    private LocalDateTime pendingUntil;
 
     public Reservation() {}
 
-    public Reservation(Long id, Long userId, Long showtimeId, String status, BigDecimal totalAmount, LocalDateTime createdAt, LocalDateTime cancelledAt) {
+    public Reservation(Long id, Long userId, Long showtimeId, String status, BigDecimal totalAmount, LocalDateTime createdAt, LocalDateTime cancelledAt, LocalDateTime pendingUntil) {
         this.id = id;
         this.userId = userId;
         this.showtimeId = showtimeId;
@@ -22,6 +23,7 @@ public class Reservation {
         this.totalAmount = totalAmount;
         this.createdAt = createdAt;
         this.cancelledAt = cancelledAt;
+        this.pendingUntil = pendingUntil;
     }
 
     public Long getId() { return id; }
@@ -44,4 +46,7 @@ public class Reservation {
 
     public LocalDateTime getCancelledAt() { return cancelledAt; }
     public void setCancelledAt(LocalDateTime cancelledAt) { this.cancelledAt = cancelledAt; }
+
+    public LocalDateTime getPendingUntil() { return pendingUntil; }
+    public void setPendingUntil(LocalDateTime pendingUntil) { this.pendingUntil = pendingUntil; }
 }
