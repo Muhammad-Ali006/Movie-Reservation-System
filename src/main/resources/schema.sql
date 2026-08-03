@@ -64,17 +64,22 @@ CREATE TABLE IF NOT EXISTS reservations (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id),
     showtime_id BIGINT REFERENCES showtimes(id),
-    status VARCHAR(20) NOT NULL DEFAULT 'CONFIRMED',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     total_amount DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    cancelled_at TIMESTAMP
+    cancelled_at TIMESTAMP,
+    pending_until TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS reservation_seats (
     id BIGSERIAL PRIMARY KEY,
     reservation_id BIGINT REFERENCES reservations(id),
-    seat_id BIGINT REFERENCES seats(id)
+    seat_id BIGINT REFERENCES seats(id),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_active_reservation_seat
+    ON reservation_seats (seat_id) WHERE is_active;
 
 CREATE TABLE IF NOT EXISTS actors (
     id BIGSERIAL PRIMARY KEY,
