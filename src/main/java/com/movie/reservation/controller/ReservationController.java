@@ -254,17 +254,17 @@ public class ReservationController {
             SELECT
                 r.id,
                 r.status,
-                r.showtime_id AS showtimeId,
-                r.total_amount AS totalAmount,
-                r.created_at AS createdAt,
-                r.pending_until AS pendingUntil,
-                m.title AS movieTitle,
-                m.slug AS movieSlug,
-                sc.id AS screenId,
-                sc.name AS screenName,
-                s.show_date AS showDate,
-                s.show_time AS showTime,
-                STRING_AGG(t.row_label || t.seat_number, ', ' ORDER BY t.row_label, t.seat_number) AS seats
+                r.showtime_id AS "showtimeId",
+                r.total_amount AS "totalAmount",
+                r.created_at AS "createdAt",
+                r.pending_until AS "pendingUntil",
+                m.title AS "movieTitle",
+                m.slug AS "movieSlug",
+                sc.id AS "screenId",
+                sc.name AS "screenName",
+                s.show_date AS "showDate",
+                s.show_time AS "showTime",
+                STRING_AGG(t.row_label || t.seat_number, ', ' ORDER BY t.row_label, t.seat_number) AS "seats"
             FROM reservations r
             JOIN showtimes s ON r.showtime_id = s.id
             JOIN movies m ON s.movie_id = m.id

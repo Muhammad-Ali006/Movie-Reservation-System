@@ -75,10 +75,10 @@ public class ShowtimeController {
         String sql = """
             SELECT
                 s.id,
-                s.seat_number AS seatNumber,
-                s.row_label AS rowLabel,
-                r.status AS reservationStatus,
-                r.id AS reservationId
+                s.seat_number AS "seatNumber",
+                s.row_label AS "rowLabel",
+                r.status AS "reservationStatus",
+                r.id AS "reservationId"
             FROM seats s
             LEFT JOIN reservation_seats rs ON rs.seat_id = s.id AND rs.is_active = true
             LEFT JOIN reservations r ON r.id = rs.reservation_id

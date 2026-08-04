@@ -36,16 +36,16 @@ public class AdminReservationController {
             SELECT
                 r.id,
                 r.status,
-                r.total_amount AS totalAmount,
-                r.created_at AS createdAt,
+                r.total_amount AS "totalAmount",
+                r.created_at AS "createdAt",
                 u.username,
-                m.title AS movieTitle,
-                m.slug AS movieSlug,
-                sc.id AS screenId,
-                sc.name AS screenName,
-                s.show_date AS showDate,
-                s.show_time AS showTime,
-                STRING_AGG(t.row_label || t.seat_number, ', ' ORDER BY t.row_label, t.seat_number) AS seats
+                m.title AS "movieTitle",
+                m.slug AS "movieSlug",
+                sc.id AS "screenId",
+                sc.name AS "screenName",
+                s.show_date AS "showDate",
+                s.show_time AS "showTime",
+                STRING_AGG(t.row_label || t.seat_number, ', ' ORDER BY t.row_label, t.seat_number) AS "seats"
             FROM reservations r
             JOIN users u ON r.user_id = u.id
             JOIN showtimes s ON r.showtime_id = s.id
