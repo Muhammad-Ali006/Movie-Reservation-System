@@ -18,4 +18,4 @@ The dev server proxies `/api` and `/uploads` to the Spring Boot backend on port 
 
 - `src/pages/` — public pages (movie listing, movie detail, seat selection, booking confirmation, login/signup) and admin pages (dashboard, genres, movies, showtimes, reservations)
 - `src/components/` — shared UI: `Navbar`, `ProtectedRoute`, `AdminRoute`
-- `src/api.js` — Axios client with JWT injection and 401 auto-logout
+- `src/utils/api.js` — Axios client with JWT injection and 401 auto-logout

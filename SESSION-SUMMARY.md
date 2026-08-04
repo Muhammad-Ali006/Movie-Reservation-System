@@ -1,3 +1,48 @@
+# Session Summary — Mon Aug 3, 2026 (Week 3, Day 1 — bug-fix follow-up)
+
+## What Was Completed
+
+### Bug: "Failed to load seat layout" from My Bookings → Change Seats
+- **Symptom** — Book a seat → My Bookings → click **Change Seats** → the page showed "Failed to load seat layout".
+- **Root cause** — PostgreSQL folds **unquoted** SQL aliases to lowercase (`AS showtimeId` → column `showtimeid`; verified live with `SELECT 1 AS showtimeId`). Three raw `queryForList` queries used unquoted camelCase aliases, so the response maps had lowercase keys:
+  - `GET /api/reservations/my` (`ReservationController`) → `showtimeid`, `movietitle`, `totalamount`, ... → `reservation.showtimeId` was `undefined` → `navigate('/booking/undefined/change')` → `GET /showtimes/undefined/seats` → 404 → the `.catch` at `SeatSelectionPage.jsx:35`.
+  - `GET /api/showtimes/{id}/seats` (`ShowtimeController`) → `row.get("seatNumber")`/`row.get("reservationStatus")`/`row.get("reservationId")` returned null → null labels, every seat `AVAILABLE`, `heldByMe` always false.
+  - `GET /api/admin/reservations` (`AdminReservationController`) → same lowercase-key issue.
+  - Side effects of the same bug: My Bookings list showed blank titles / `$NaN` amounts / missing dates.
+- **Fix** — quote the aliases in all 3 queries (`AS "showtimeId"`, `"seatNumber"`, `"totalAmount"`, ...) so PostgreSQL preserves camelCase, and pass `changeMode: true` (plus `reservationId`) in `UserReservationsPage.handleChangeSeats` so SeatSelectionPage enters change mode. The confirmation-page "Change Seats" button was already correct.
+- **Files changed** — `ReservationController.java`, `ShowtimeController.java`, `AdminReservationController.java` (quoted aliases); `frontend/src/pages/UserReservationsPage.jsx` (navigate state).
+- **Verified live** — seats endpoint returns `id,rowLabel,seatNumber,status,heldByMe`; book→PENDING hold→`?heldReservationId=` shows `heldByMe:true` (change-mode pre-selection data); `PUT /api/reservations/{id}/seats` updates seats + recomputes total; confirm works; `GET /api/reservations/my` returns camelCase keys and Change Seats targets `/booking/12/change`. `mvnw compile` + `npm run build` pass. Test data cleaned up; backend stopped.
+- Recorded in **BUGS.md** as #16 (Fixed, W3 Tue) and SCHEDULE.md de-staled.
+
+## Current State
+- W3 Mon work (2-min PENDING hold + mock confirm, HoldExpiryJob, overbooking `FOR UPDATE` + `uq_active_reservation_seat`, My Bookings + `/api/reservations/my`, change seats, admin booking listing, Option B confirmation-page "Change Seats" + README alignment) is complete and verified; the W3 Tue bug-fix above restores the change-seats flow end-to-end.
+- Docs updated: SCHEDULE.md (stale "change seats" references cleared), BUGS.md (#16 added), README.md (Known Issues note), frontend/README.md (`src/api.js` → `src/utils/api.js`), SESSION-SUMMARY.md (this block).
+
+### Uncommitted Changes (user commits as usual)
+```
+src/main/java/.../controller/ReservationController.java   — quoted aliases in GET /my
+src/main/java/.../controller/ShowtimeController.java      — quoted aliases in GET /seats
+src/main/java/.../controller/AdminReservationController.java — quoted aliases
+frontend/src/pages/UserReservationsPage.jsx               — navigate state: + changeMode:true
+README.md, frontend/src/pages/AdminReservationPage.jsx, BookingConfirmationPage.jsx, SeatSelectionPage.jsx — W3 Mon (intentionally uncommitted)
+```
+SCHEDULE.md, BUGS.md, WEEK1-REPORT.md are gitignored (not committed).
+
+## Tomorrow's Plan — Tue Aug 4 (Week 3, Day 2)
+- Backend: Revenue report `GET /api/admin/reports/revenue` (total revenue grouped by movie/screen/date)
+- Backend: Capacity report `GET /api/admin/reports/capacity` (seat occupancy % per showtime/screen)
+- Backend: `PUT /api/admin/showtimes/{id}` (update date/time/price; block if CONFIRMED/PENDING bookings exist)
+- Frontend: AdminShowtimePage management UI (list existing showtimes, delete button — DELETE API exists but no UI — edit pre-fill → update mode)
+
+## Critical Notes
+- Start backend: `./mvnw.cmd spring-boot:run`
+- Start frontend: `cd frontend && npm run dev`
+- Admin login: username `admin`, password `admin123`
+- DB: `movie_db`, localhost:5432, user `postgres`, password `root`
+- **Postgres quirk:** always quote camelCase aliases in SQL (`AS "showtimeId"`) — unquoted identifiers fold to lowercase and break `queryForList` map keys.
+
+---
+
 # Session Summary — Wed Jul 29, 2026 (Week 2, Day 3)
 
 ## What Was Completed

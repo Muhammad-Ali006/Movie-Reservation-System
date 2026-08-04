@@ -109,7 +109,7 @@ npm run dev
 - **Admin showtime creation** — `POST /api/admin/showtimes` accepts movieId, screenId, showDate, showTime, pricePerSeat
 - **Auto seat generation** — when a showtime is created, seats are automatically generated based on the screen's capacity (e.g. Screen 5 → 180 seats → 12 rows × 15)
 - **Public showtime listing** — `GET /api/showtimes?movieId={id}` returns all showtimes for a movie with screen name, available seat count, and price
-- **Seat layout endpoint** — `GET /api/showtimes/{showtimeId}/seats` returns all seats with `id`, `seatNumber`, `rowLabel`, and `status` ("AVAILABLE" / "BOOKED")
+- **Seat layout endpoint** — `GET /api/showtimes/{showtimeId}/seats` returns all seats with `id`, `seatNumber`, `rowLabel`, `status` ("AVAILABLE" / "HELD" / "BOOKED"), and `heldByMe`; optional `?heldReservationId=` so a user's own held seats show as AVAILABLE (change-seats mode)
 - **Showtime details endpoint** — `GET /api/showtimes/{id}` returns enriched showtime data: `movieTitle`, `movieSlug`, `showDate`, `showTime`, `screenName`, `screenType`, `totalSeats`, `availableSeats`, `pricePerSeat`
 
 ### Backend Architecture
@@ -153,10 +153,12 @@ npm run dev
   - Cast section: in create mode shows info message ("Cast can be added after creating the movie"); in edit mode shows full cast management with add/remove, role names, and photo upload with styled file button
 - **MovieListingPage** — public page with three tabs: "Now Showing" (movies with future showtimes), "Coming Soon" (no showtimes yet), "All Movies". Each tab supports server-side genre filter, sort (Newest, Title A-Z, Release Date, Duration), and pagination (6 per page). Movie cards show "NOW SHOWING" / "COMING SOON" badges and link to detail page using slug URLs
 - **MovieDetailPage** — movie detail page with side-by-side layout: poster on left, title + genre badges + metadata grid (duration, release date, language, director) + description on right, followed by cast grid with round photo avatars and character names. Includes a showtime section with date picker tabs and time cards showing screen name, screen type, available seats, and price. Each showtime card links to the seat selection page
-- **SeatSelectionPage** — interactive seat grid at `/booking/:showtimeId`. Seats grouped by row (A, B, C...), color-coded (green=AVAILABLE, gray=BOOKED, red=selected). Click to select/deselect, legend, "Continue" button navigates to `/booking/:showtimeId/confirm`
-- **BookingConfirmationPage** — booking summary at `/booking/:showtimeId/confirm`. Displays movie title, date/time, screen, selected seat tags (row+number), price breakdown, total. "Confirm Booking" button calls `POST /api/reservations` (requires auth). Success state with reservation ID and full details. Handles: missing route state guard, loading/error/confirming states
+- **SeatSelectionPage** — interactive seat grid at `/booking/:showtimeId`. Seats grouped by row (A, B, C...), color-coded (green=AVAILABLE, gray=HELD/BOOKED, red=selected). Click to select/deselect, legend, "Continue" button navigates to `/booking/:showtimeId/confirm`. Also supports **change mode** at `/booking/:showtimeId/change` (from My Bookings): current seats pre-selected via `?heldReservationId=`, "Update Seats" calls `PUT /api/reservations/{id}/seats`
+- **BookingConfirmationPage** — booking summary at `/booking/:showtimeId/confirm`. **Two-step hold flow:** "Confirm Booking" creates a PENDING hold (2-min countdown), then "Complete Booking" (mock payment) flips it to CONFIRMED via `POST /api/reservations/{id}/confirm`. "Cancel Hold" releases the seats. Expiry shows "Hold Expired" and links back to seat selection. Success state with reservation ID and full details, plus **"Change Seats"** (→ change mode) and **"Cancel Reservation"** buttons. Handles: missing route state guard, loading/error/confirming states
+- **UserReservationsPage** — "My Bookings" at `/my-bookings` (ProtectedRoute). Lists the user's reservations (PENDING/CONFIRMED/CANCELLED) with movie, screen, date/time, seats, amount, and status badge. **"Change Seats"** (→ change mode) and **"Cancel Booking"** buttons per booking
+- **Navbar** — now shows a "My Bookings" link (desktop + mobile) for logged-in users
 - **AdminShowtimePage** — create showtimes at `/admin/showtimes`. Movie + screen dropdowns, date/time/price inputs, seat preview, success summary with seat count
-- **AdminReservationPage** — admin booking management at `/admin/reservations`. Screen filter dropdown, 2-column card grid showing movie title, screen, date/time, user, seats, amount, and status badge. Individual "Cancel Booking" buttons plus a "Cancel All" button that bulk-cancels every active booking for the selected screen. Confirmation dialogs, loading/error/empty states
+- **AdminReservationPage** — admin booking management at `/admin/reservations`. Screen filter dropdown, 2-column card grid showing movie title, screen, date/time, user, seats, amount, and status badge (PENDING shows a yellow badge with a cancel button). Individual "Cancel Booking" buttons plus a "Cancel All" button that bulk-cancels every active (PENDING/CONFIRMED) booking for the selected screen. Confirmation dialogs, loading/error/empty states
 
 ---
 
@@ -245,17 +247,21 @@ Auto-seeded on startup:
 | id           | BIGSERIAL     | PRIMARY KEY       |
 | user_id      | BIGINT        | FK → users(id)    |
 | showtime_id  | BIGINT        | FK → showtimes(id)|
-| status       | VARCHAR(20)   | NOT NULL, DEFAULT 'CONFIRMED' |
+| status       | VARCHAR(20)   | NOT NULL, DEFAULT 'PENDING' (PENDING = 2-min hold, CONFIRMED = booked, CANCELLED) |
 | total_amount | DECIMAL(10,2) | NOT NULL          |
 | created_at   | TIMESTAMP     | DEFAULT CURRENT_TIMESTAMP |
 | cancelled_at | TIMESTAMP     |                   |
+| pending_until| TIMESTAMP     | 2-min hold expiry for PENDING reservations (cleared on confirm) |
 
 ### reservation_seats
-| Column         | Type       | Constraint              |
-|---------------|-----------|-------------------------|
-| id            | BIGSERIAL  | PRIMARY KEY             |
-| reservation_id| BIGINT     | FK → reservations(id)   |
-| seat_id       | BIGINT     | FK → seats(id)          |
+| Column         | Type              | Constraint              |
+|---------------|-------------------|-------------------------|
+| id            | BIGSERIAL         | PRIMARY KEY             |
+| reservation_id| BIGINT            | FK → reservations(id)   |
+| seat_id       | BIGINT            | FK → seats(id)          |
+| is_active     | BOOLEAN           | NOT NULL, DEFAULT TRUE — set FALSE on cancel/expiry/seat-change (keeps history) |
+
+> **Anti-double-booking guard:** partial unique index `uq_active_reservation_seat ON reservation_seats (seat_id) WHERE is_active` — a seat physically cannot be in two active reservations. Combined with `SELECT ... FOR UPDATE` in `POST /api/reservations` and `PUT /api/reservations/{id}/seats` (first-come-first-served).
 
 ### actors
 | Column    | Type         | Constraint        |
@@ -327,8 +333,11 @@ Auto-seeded on startup:
 ### Reservations
 | Method | Endpoint                      | Access        | Description               |
 |--------|-------------------------------|---------------|---------------------------|
-| POST   | /api/reservations             | Authenticated | Create reservation        |
-| PUT    | /api/reservations/{id}/cancel | Authenticated | Cancel reservation (admins can cancel any) |
+| POST   | /api/reservations             | Authenticated | Create reservation (**PENDING hold** — status=PENDING, `pending_until`=now+2min, seats held; `SELECT ... FOR UPDATE` prevents double-booking) |
+| POST   | /api/reservations/{id}/confirm | Authenticated | **Mock payment** — flips PENDING→CONFIRMED within the 2-min window (idempotent; rejects expired holds). Future payment webhook lands here |
+| GET    | /api/reservations/my          | Authenticated | Get the user's own reservations (movie, screen, date/time, seats, amount, status) |
+| PUT    | /api/reservations/{id}/cancel | Authenticated | Cancel reservation (**PENDING or CONFIRMED**; admins can cancel any) — releases seats |
+| PUT    | /api/reservations/{id}/seats  | Authenticated | **Change seats** — new seats must be available or already held by this reservation; releases old, holds new, recomputes total (PENDING + CONFIRMED) |
 
 ### Admin Reservations
 | Method | Endpoint                              | Access | Description                              |
@@ -336,14 +345,14 @@ Auto-seeded on startup:
 | GET    | /api/admin/reservations?screenId={id} | ADMIN  | List all reservations, optionally filtered by screen |
 | PUT    | /api/admin/reservations/bulk-cancel   | ADMIN  | Cancel multiple reservations in one request |
 
-### Up Next (Week 3)
+### Up Next (Week 3 remaining)
 | Method | Endpoint                      | Access        | Description               |
 |--------|-------------------------------|---------------|---------------------------|
-| GET    | /api/reservations/my          | Authenticated | Get user's reservations   |
-| PUT    | /api/reservations/{id}/seats  | Authenticated | Change selected seats after confirmation |
 | GET    | /api/admin/reports/revenue    | ADMIN         | Revenue report            |
 | GET    | /api/admin/reports/capacity   | ADMIN         | Capacity report           |
 | PUT    | /api/admin/showtimes/{id}     | ADMIN         | Update showtime (date/time/price) |
+| GET    | /api/tickets/{ticketToken}    | Public        | Ticket QR validation (VALID/INVALID/USED) |
+| POST   | /api/payments/...             | Authenticated | Real payment initiation/confirm/cancel (PaymentProvider + Mock now, JazzCash/Easypaisa/SadaPay later) |
 
 ---
 
@@ -372,43 +381,47 @@ The following features are planned but **not yet implemented**:
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **UserReservationsPage** | "My Bookings" page where users view their own reservation history (confirmed + cancelled), including movie title, screen, date/time, seats, amount, and status | Not started |
-| **GET /api/reservations/my** | Backend endpoint returning the authenticated user's reservations | Not started |
+| **2-min seat hold + mock payment** | `POST /api/reservations` → PENDING (seats held 2 min); `POST /api/reservations/{id}/confirm` → CONFIRMED (mock payment, the future webhook seam); `HoldExpiryJob` releases expired holds. UI: 2:00 countdown + "Complete Booking" on the confirmation page | ✅ Done (foundation for payment) |
+| **UserReservationsPage** | "My Bookings" page where users view their own reservation history (pending + confirmed + cancelled), including movie title, screen, date/time, seats, amount, and status, with Cancel + Change Seats | ✅ Done |
+| **GET /api/reservations/my** | Backend endpoint returning the authenticated user's reservations | ✅ Done |
+| **Overbooking prevention** | `SELECT ... FOR UPDATE` in the reservation/change-seats transactions + `uq_active_reservation_seat` partial unique index (`reservation_seats.seat_id WHERE is_active`) as the DB hard-guard | ✅ Done |
+| **Change seats** | `PUT /api/reservations/{id}/seats` (PENDING + CONFIRMED, FOR UPDATE, available-or-held-by-me, recomputes total) + SeatSelectionPage change mode + "Change Seats" buttons | ✅ Done |
 | **Revenue report** | `GET /api/admin/reports/revenue` — total revenue grouped by movie/screen/date | Not started |
 | **Capacity report** | `GET /api/admin/reports/capacity` — seat occupancy percentage per showtime/screen | Not started |
 | **AdminDashboard charts** | Upgrade `AdminDashboard.jsx` from navigation cards to a stats dashboard with revenue/capacity charts | Not started |
 | **Error pages** | Dedicated 404/error pages on the frontend (currently handled per-page with error banners) | Partial |
-| **End-to-end testing** | Full test pass over backend APIs and frontend user flows (booking → cancel, admin management) | Not started |
-| **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price only — movie/screen changes would invalidate seats/bookings). Should block if CONFIRMED bookings exist | Not started |
+| **End-to-end testing** | Full test pass over backend APIs and frontend user flows (book → hold → mock pay → cancel, change seats, admin management) | Not started |
+| **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price only — movie/screen changes would invalidate seats/bookings). Should block if CONFIRMED/PENDING bookings exist | Not started |
 | **AdminShowtimePage management UI** | Upgrade the create-only showtime page into a full management page: list existing showtimes, delete button per showtime (the `DELETE` API exists but has **no frontend UI**), edit button that pre-fills the form and switches to update mode. Refresh the list after create/update/delete | Not started |
-| **Payment integration** | JazzCash/Easypaisa/SadaPay via a `PaymentProvider` interface + Mock implementation. Flow: select seats → **hold** (reservation `status=PENDING`, seats marked unavailable, `payments` row created) → initiate provider payment → provider callback/webhook validates and flips to `CONFIRMED`. Abandon / failure / 10-min expiry releases seats (`CANCELLED`). `payments` table tracks reservation_id, amount, provider, txn id, status, paid_at. Amount is always computed server-side (never trust the client). Production needs merchant/business accounts + sandbox keys; amounts in PKR; dev webhooks need a public URL (ngrok) | Not started |
+| **Payment integration** | JazzCash/Easypaisa/SadaPay via a `PaymentProvider` interface + Mock implementation. The 2-min PENDING hold and `POST /api/reservations/{id}/confirm` are already in place as the seam. Real flow: initiate provider payment → provider callback/webhook validates and flips to `CONFIRMED`. Abandon / failure / expiry releases seats. `payments` table tracks reservation_id, amount, provider, txn id, status, paid_at. Amount is always computed server-side (never trust the client). Production needs merchant/business accounts + sandbox keys; amounts in PKR; dev webhooks need a public URL (ngrok) | Not started |
 | **Digital ticket + QR validation** | After payment confirms, "Download Ticket" renders a printable ticket (movie, screen, date/time, seats, amount, ticket code + QR generated client-side with the `qrcode` lib). The venue/recipient scans the QR → `GET /api/tickets/{ticketToken}` returns VALID/INVALID (no user PII); the first successful scan marks the ticket **USED** → rescanning shows "ALREADY USED". INVALID if token unknown, reservation `CANCELLED`, or showtime has passed. Ticket identity stored server-side (e.g., `tickets` table) so the QR is verifiable even though it's rendered on the client | Not started |
-| **Overbooking prevention** | `SELECT ... FOR UPDATE` on the seat rows inside the `POST /api/reservations` transaction so concurrent bookings serialize and can't both take the same seat. New `SeatRepository.findByShowtimeIdForUpdate()`; swap into `createReservation`. No frontend change. (Moved from Week 2 Friday) | Not started |
-| **Change seats after confirmation** | `PUT /api/reservations/{id}/seats` with `{ seatIds }`. Rules: reservation exists + `CONFIRMED` + owner/admin; seats locked with `FOR UPDATE`; each new seat must belong to the showtime and be available **or already held by this reservation**; release old seats → replace `reservation_seats` → mark new seats unavailable → recompute `total_amount`, all in one transaction. UI: "Change Seats" from UserReservationsPage → SeatSelectionPage change mode (pre-selected current seats). Open question to confirm when building: button placement (My Bookings only vs also BookingConfirmationPage). (Moved from Week 2 Friday) | Not started |
 
 ### Known Issues
 
 > Full consolidated list with statuses: **[BUGS.md](BUGS.md)** — bugs, database design gaps, dead-code cleanup, and decisions.
 >
 > The bugs found in Week 2 (booking route guard, no-op block, `screen_number` FK, orphaned actors, dead code) were all fixed on W2 Fri — see **BUGS.md** for the full record.
+>
+> W3 Tue fix: **Postgres unquoted-alias folding** (#16) — raw `queryForList` queries used unquoted camelCase aliases that PostgreSQL folds to lowercase, so `/api/reservations/my`, `/api/showtimes/{id}/seats`, and `/api/admin/reservations` returned lowercase keys. The frontend's camelCase reads (`showtimeId`, `movieTitle`, `seatNumber`, `heldByMe`, ...) were `undefined`, which broke My Bookings "Change Seats" (`/booking/undefined/change` → "Failed to load seat layout"), showed blank titles / `$NaN`, and rendered the seat grid without labels/HELD/`heldByMe`. Fixed by quoting the aliases in the 3 queries plus passing `changeMode: true` in the My Bookings navigation.
 
 ### Suggested build order
 
-0. **UserReservationsPage** + `GET /api/reservations/my` — closes the user booking loop
-1. **Showtime management** — `PUT /api/admin/showtimes/{id}` + management UI on `AdminShowtimePage` (delete button uses the existing `DELETE` API; edit pre-fills the form). List existing showtimes with a movie/screen filter so admins can fix mistakes
-2. **Revenue + capacity reports** — feed the admin dashboard charts
-3. **AdminDashboard with charts/stats** — visual overview for admins
-4. **Error pages + polish** — 404 page, consistent loading states
-5. **End-to-end testing** — verify all flows before Week 4 QA
-6. **Payment integration** — `PaymentProvider` interface + Mock provider, PENDING hold flow with 10-min expiry, `payments` table, then swap in JazzCash/Easypaisa/SadaPay
-7. **Digital ticket + QR validation** — ticket token + `GET /api/tickets/{token}` (VALID/INVALID/USED) + printable ticket page with QR
-8. **Overbooking prevention** — `SELECT FOR UPDATE` on seat rows in `POST /api/reservations` (do this before payment so holds are race-safe)
-9. **Change seats after confirmation** — `PUT /api/reservations/{id}/seats` + SeatSelectionPage change mode (depends on UserReservationsPage)
+0. ✅ **UserReservationsPage** + `GET /api/reservations/my` — closes the user booking loop
+1. ✅ **2-min seat hold + mock payment** — PENDING hold, `POST /api/reservations/{id}/confirm`, `HoldExpiryJob`, countdown UI (foundation for payment)
+2. ✅ **Overbooking prevention** — `SELECT FOR UPDATE` on seat rows + `uq_active_reservation_seat` partial unique index (done before payment so holds are race-safe)
+3. ✅ **Change seats** — `PUT /api/reservations/{id}/seats` + SeatSelectionPage change mode (PENDING + CONFIRMED)
+4. **Showtime management** — `PUT /api/admin/showtimes/{id}` + management UI on `AdminShowtimePage` (delete button uses the existing `DELETE` API; edit pre-fills the form). List existing showtimes with a movie/screen filter so admins can fix mistakes
+5. **Revenue + capacity reports** — feed the admin dashboard charts
+6. **AdminDashboard with charts/stats** — visual overview for admins
+7. **Error pages + polish** — 404 page, consistent loading states
+8. **End-to-end testing** — verify all flows before Week 4 QA
+9. **Payment integration** — `PaymentProvider` interface + Mock provider, then swap in JazzCash/Easypaisa/SadaPay (the PENDING hold + `confirm` endpoint are the seam)
+10. **Digital ticket + QR validation** — ticket token + `GET /api/tickets/{token}` (VALID/INVALID/USED) + printable ticket page with QR
 
 ---
 
 ## Project Status
 
-**Work in progress.** Auth flow, genre CRUD, movie CRUD with poster/cast, public movie listing with genre filter, movie detail page, Cinema Noir dark theme, smooth scrolling, responsive layouts, file cleanup, 6 cinema screens, showtime creation with auto seat generation, showtime deletion with active-booking guard, tab-based movie listing with server-side filtering/sorting/pagination, showtime date picker on movie detail page, seat layout endpoint, visual seat selection grid, reservation creation with `@Transactional`, showtime details endpoint, booking confirmation page, cancel reservation, admin showtime creation page, admin bookings page with screen filter + bulk cancel, movie cascade delete (FK-safe, poster cleanup after DB success), and the W2 Fri bug-fix pass (booking route guard, no-op removal, `screen_number` FK, orphaned-actor cleanup, dead-code removal) are all complete.
+**Work in progress.** Auth flow, genre CRUD, movie CRUD with poster/cast, public movie listing with genre filter, movie detail page, Cinema Noir dark theme, smooth scrolling, responsive layouts, file cleanup, 6 cinema screens, showtime creation with auto seat generation, showtime deletion with active-booking guard, tab-based movie listing with server-side filtering/sorting/pagination, showtime date picker on movie detail page, seat layout endpoint, visual seat selection grid, reservation creation with `@Transactional`, showtime details endpoint, booking confirmation page, cancel reservation, admin showtime creation page, admin bookings page with screen filter + bulk cancel, movie cascade delete (FK-safe, poster cleanup after DB success), the W2 Fri bug-fix pass (booking route guard, no-op removal, `screen_number` FK, orphaned-actor cleanup, dead-code removal), and the **W3 Mon pass** (2-min PENDING seat hold + mock-payment confirm, `HoldExpiryJob` 30s sweep, overbooking prevention with `SELECT FOR UPDATE` + `uq_active_reservation_seat` partial unique index, My Bookings page + `/api/reservations/my`, change seats for PENDING + CONFIRMED, admin booking listing PENDING handling, showtime delete guard including PENDING, docs) are all complete.
 
-Remaining Week 3 work: **UserReservationsPage + `/api/reservations/my`**, showtime update endpoint + management UI (delete UI missing), revenue/capacity reports, admin dashboard charts, error pages, end-to-end testing, **payment integration (JazzCash/Easypaisa/SadaPay + mock)**, **digital ticket with QR validation**, **overbooking prevention (`SELECT FOR UPDATE`)**, and **change seats after confirmation**. See the **Remaining Week 3 Features** section above.
+Remaining Week 3 work: showtime update endpoint + management UI (delete UI missing), revenue/capacity reports, admin dashboard charts, error pages, end-to-end testing, **payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**, and **digital ticket with QR validation**. See the **Remaining Week 3 Features** section above.
