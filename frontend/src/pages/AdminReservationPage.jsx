@@ -52,7 +52,7 @@ function AdminReservationPage() {
 
   const handleCancelAll = async () => {
     const confirmedIds = reservations
-      .filter(r => r.status === 'CONFIRMED')
+      .filter(r => r.status === 'CONFIRMED' || r.status === 'PENDING')
       .map(r => r.id)
     if (confirmedIds.length === 0) return
     const screenName = screens.find(s => s.id === Number(selectedScreenId))?.name || 'selected screen'
@@ -84,7 +84,7 @@ function AdminReservationPage() {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   }
 
-  const confirmedCount = reservations.filter(r => r.status === 'CONFIRMED').length
+  const activeCount = reservations.filter(r => r.status === 'CONFIRMED' || r.status === 'PENDING').length
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 pt-20">
@@ -115,7 +115,7 @@ function AdminReservationPage() {
           </select>
         </div>
 
-        {confirmedCount > 0 && (
+        {activeCount > 0 && (
           <button
             onClick={handleCancelAll}
             disabled={cancellingAll}
@@ -129,7 +129,7 @@ function AdminReservationPage() {
             {cancellingAll ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling...</>
             ) : (
-              <><XCircle className="w-4 h-4" /> Cancel All ({confirmedCount})</>
+              <><XCircle className="w-4 h-4" /> Cancel All ({activeCount})</>
             )}
           </button>
         )}
@@ -188,8 +188,12 @@ function AdminReservationPage() {
                 <span
                   className="text-xs px-2.5 py-1 rounded-full font-semibold ml-3 flex-shrink-0"
                   style={{
-                    backgroundColor: r.status === 'CONFIRMED' ? 'var(--color-success)' : 'var(--color-border)',
-                    color: r.status === 'CONFIRMED' ? '#000' : 'var(--color-text-muted)',
+                    backgroundColor: r.status === 'CONFIRMED'
+                      ? 'var(--color-success)'
+                      : r.status === 'PENDING'
+                        ? 'var(--color-warning)'
+                        : 'var(--color-border)',
+                    color: r.status === 'CANCELLED' ? 'var(--color-text-muted)' : '#000',
                   }}
                 >
                   {r.status}
@@ -211,7 +215,7 @@ function AdminReservationPage() {
                 </div>
               </div>
 
-              {r.status === 'CONFIRMED' && (
+              {(r.status === 'CONFIRMED' || r.status === 'PENDING') && (
                 <button
                   onClick={() => handleCancel(r.id)}
                   disabled={cancellingId === r.id}
