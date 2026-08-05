@@ -5,8 +5,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +27,16 @@ public class ShowtimeRepository {
     public List<Showtime> findAllByMovieId(Long movieId) {
         String sql = "SELECT * FROM showtimes WHERE movie_id = ? ORDER BY show_date ASC, show_time ASC";
         return jdbcTemplate.query(sql, showtimeRowMapper, movieId);
+    }
+
+    public List<Showtime> findAll() {
+        String sql = "SELECT * FROM showtimes ORDER BY show_date DESC, show_time DESC, id DESC";
+        return jdbcTemplate.query(sql, showtimeRowMapper);
+    }
+
+    public void updateDateTimePrice(Long id, LocalDate showDate, LocalTime showTime, BigDecimal pricePerSeat) {
+        String sql = "UPDATE showtimes SET show_date = ?, show_time = ?, price_per_seat = ? WHERE id = ?";
+        jdbcTemplate.update(sql, showDate, showTime, pricePerSeat, id);
     }
 
     public Optional<Showtime> findById(Long id) {
