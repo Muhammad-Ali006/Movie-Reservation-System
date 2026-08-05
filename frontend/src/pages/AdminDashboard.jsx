@@ -48,7 +48,7 @@ function AdminDashboard() {
             <CalendarClock className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
             <h2 className="text-xl font-semibold" style={{ color: 'var(--color-primary)' }}>Showtimes</h2>
           </div>
-          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Create showtimes for movies</p>
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Create, edit, or remove showtimes</p>
         </Link>
 
         <Link
