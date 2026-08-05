@@ -2,10 +2,12 @@ package com.movie.reservation.controller;
 
 import com.movie.reservation.dto.request.ShowtimeRequest;
 import com.movie.reservation.exception.ResourceNotFoundException;
+import com.movie.reservation.model.Movie;
 import com.movie.reservation.model.Screen;
 import com.movie.reservation.model.Seat;
 import com.movie.reservation.model.Showtime;
 import com.movie.reservation.repository.MovieRepository;
+import com.movie.reservation.repository.ReservationRepository;
 import com.movie.reservation.repository.ScreenRepository;
 import com.movie.reservation.repository.SeatRepository;
 import com.movie.reservation.repository.ShowtimeRepository;
@@ -27,17 +29,20 @@ public class AdminShowtimeController {
     private final ScreenRepository screenRepository;
     private final SeatRepository seatRepository;
     private final MovieRepository movieRepository;
+    private final ReservationRepository reservationRepository;
     private final JdbcTemplate jdbcTemplate;
 
     public AdminShowtimeController(ShowtimeRepository showtimeRepository,
                                     ScreenRepository screenRepository,
                                     SeatRepository seatRepository,
                                     MovieRepository movieRepository,
+                                    ReservationRepository reservationRepository,
                                     JdbcTemplate jdbcTemplate) {
         this.showtimeRepository = showtimeRepository;
         this.screenRepository = screenRepository;
         this.seatRepository = seatRepository;
         this.movieRepository = movieRepository;
+        this.reservationRepository = reservationRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -92,6 +97,124 @@ public class AdminShowtimeController {
         response.put("seatsGenerated", seats.size());
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Map<String, Object>>> getAllShowtimes(
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) Long screenId) {
+        List<Showtime> showtimes = showtimeRepository.findAll();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Showtime showtime : showtimes) {
+            if (movieId != null && !movieId.equals(showtime.getMovieId())) continue;
+            if (screenId != null && screenId.longValue() != showtime.getScreenNumber()) continue;
+
+            Movie movie = movieRepository.findById(showtime.getMovieId()).orElse(null);
+            Screen screen = screenRepository.findById((long) showtime.getScreenNumber()).orElse(null);
+            int availableSeats = seatRepository.countAvailableByShowtimeId(showtime.getId());
+            int activeBookings = reservationRepository.countActiveByShowtimeId(showtime.getId());
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", showtime.getId());
+            item.put("movieId", showtime.getMovieId());
+            item.put("movieTitle", movie != null ? movie.getTitle() : null);
+            item.put("movieSlug", movie != null ? movie.getSlug() : null);
+            item.put("screenId", showtime.getScreenNumber());
+            item.put("screenName", screen != null ? screen.getName() : "Screen " + showtime.getScreenNumber());
+            item.put("screenType", screen != null ? screen.getScreenType() : "UNKNOWN");
+            item.put("showDate", showtime.getShowDate());
+            item.put("showTime", showtime.getShowTime());
+            item.put("totalSeats", showtime.getTotalSeats());
+            item.put("availableSeats", availableSeats);
+            item.put("pricePerSeat", showtime.getPricePerSeat());
+            item.put("activeBookings", activeBookings);
+
+            result.add(item);
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateShowtime(
+            @PathVariable Long id,
+            @RequestBody ShowtimeRequest request) {
+        showtimeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
+
+        if (request.getShowDate() == null || request.getShowTime() == null || request.getPricePerSeat() == null) {
+            throw new IllegalArgumentException("showDate, showTime, and pricePerSeat are required");
+        }
+        if (request.getPricePerSeat().signum() < 0) {
+            throw new IllegalArgumentException("Price per seat cannot be negative");
+        }
+
+        int activeBookings = reservationRepository.countActiveByShowtimeId(id);
+        if (activeBookings > 0) {
+            throw new IllegalArgumentException(
+                "Cannot update showtime: " + activeBookings + " active booking(s) exist. Cancel them first."
+            );
+        }
+
+        showtimeRepository.updateDateTimePrice(id, request.getShowDate(), request.getShowTime(), request.getPricePerSeat());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", id);
+        response.put("showDate", request.getShowDate());
+        response.put("showTime", request.getShowTime());
+        response.put("pricePerSeat", request.getPricePerSeat());
+        response.put("message", "Showtime updated successfully");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/seats")
+    public ResponseEntity<List<Map<String, Object>>> getShowtimeSeats(@PathVariable Long id) {
+        showtimeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
+
+        String sql = """
+            SELECT
+                s.id,
+                s.seat_number AS "seatNumber",
+                s.row_label AS "rowLabel",
+                r.status AS "reservationStatus",
+                r.id AS "reservationId",
+                u.username,
+                r.total_amount AS "totalAmount"
+            FROM seats s
+            LEFT JOIN reservation_seats rs ON rs.seat_id = s.id AND rs.is_active = true
+            LEFT JOIN reservations r ON r.id = rs.reservation_id
+            LEFT JOIN users u ON u.id = r.user_id
+            WHERE s.showtime_id = ?
+            ORDER BY s.row_label ASC, s.seat_number ASC
+        """;
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> row : jdbcTemplate.queryForList(sql, id)) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", row.get("id"));
+            item.put("seatNumber", row.get("seatNumber"));
+            item.put("rowLabel", row.get("rowLabel"));
+
+            String reservationStatus = (String) row.get("reservationStatus");
+            String status;
+            if (reservationStatus == null) {
+                status = "AVAILABLE";
+            } else if ("PENDING".equals(reservationStatus)) {
+                status = "HELD";
+            } else {
+                status = "BOOKED";
+            }
+
+            item.put("status", status);
+            item.put("reservationId", row.get("reservationId"));
+            item.put("username", row.get("username"));
+            item.put("totalAmount", row.get("totalAmount"));
+            result.add(item);
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{id}")
