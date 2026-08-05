@@ -102,6 +102,12 @@ public class ReservationRepository {
         return jdbcTemplate.query(sql, reservationRowMapper, Timestamp.valueOf(now));
     }
 
+    public int countActiveByShowtimeId(Long showtimeId) {
+        String sql = "SELECT COUNT(*) FROM reservations WHERE showtime_id = ? AND status IN ('PENDING', 'CONFIRMED')";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, showtimeId);
+        return count != null ? count : 0;
+    }
+
     public void cancelReservation(Long id, LocalDateTime cancelledAt) {
         String sql = "UPDATE reservations SET status = 'CANCELLED', cancelled_at = ? WHERE id = ?";
         jdbcTemplate.update(sql, Timestamp.valueOf(cancelledAt), id);
