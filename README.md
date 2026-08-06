@@ -159,6 +159,8 @@ npm run dev
 - **Navbar** — now shows a "My Bookings" link (desktop + mobile) for logged-in users
 - **AdminShowtimePage** — create showtimes at `/admin/showtimes`. Movie + screen dropdowns, date/time/price inputs, seat preview, success summary with seat count
 - **AdminReservationPage** — admin booking management at `/admin/reservations`. Screen filter dropdown, 2-column card grid showing movie title, screen, date/time, user, seats, amount, and status badge (PENDING shows a yellow badge with a cancel button). Individual "Cancel Booking" buttons plus a "Cancel All" button that bulk-cancels every active (PENDING/CONFIRMED) booking for the selected screen. Confirmation dialogs, loading/error/empty states
+- **Admin booking seat grid** — once a screen is selected, cascading **Show → Time** dropdowns (from `GET /api/admin/showtimes?screenId=`) drive a read-only seat grid (`GET /api/admin/showtimes/{id}/seats`) identical in look to the user's seat picker: green=available, yellow=held, red=booked. Clicking a booked/held seat cancels that whole reservation (with a confirm dialog showing the owner + amount); a "Cancel All (showtime)" button bulk-cancels every active booking for the showtime. The card list remains for the "All Screens" view
+- **AdminShowtimePage** — full management page at `/admin/showtimes`: create form (unchanged) plus an "All Showtimes" list with movie filter, per-showtime Edit/Delete, and an active-bookings badge. Edit pre-fills the form in update mode (movie/screen locked) and calls `PUT /api/admin/showtimes/{id}`; Delete calls the existing `DELETE` API. Edit/Delete are disabled while the showtime has active bookings (blocked server-side too)
 
 ---
 
@@ -327,8 +329,10 @@ Auto-seeded on startup:
 | GET    | /api/showtimes/{id}                   | Public         | Get showtime details (enriched)|
 | GET    | /api/showtimes/{showtimeId}/seats     | Public         | Get seat layout with status    |
 | POST   | /api/admin/showtimes                  | ADMIN          | Create showtime + generate seats |
-| PUT    | /api/admin/showtimes/{id}             | ADMIN          | Update showtime (date/time/price) — ⬜ NOT IMPLEMENTED |
-| DELETE | /api/admin/showtimes/{id}             | ADMIN          | Delete showtime (blocks if active bookings exist) — API done, ⬜ no frontend UI |
+| GET    | /api/admin/showtimes?movieId=&screenId= | ADMIN        | List all showtimes (enriched: movie, screen, available seats, active bookings) with optional movie/screen filter |
+| PUT    | /api/admin/showtimes/{id}             | ADMIN          | Update showtime (date/time/price only — movie/screen fixed; blocks if active bookings exist) |
+| DELETE | /api/admin/showtimes/{id}             | ADMIN          | Delete showtime (blocks if active bookings exist) |
+| GET    | /api/admin/showtimes/{id}/seats       | ADMIN          | Admin seat grid — per-seat status + reservation id/owner/amount |
 
 ### Reservations
 | Method | Endpoint                      | Access        | Description               |
@@ -350,7 +354,6 @@ Auto-seeded on startup:
 |--------|-------------------------------|---------------|---------------------------|
 | GET    | /api/admin/reports/revenue    | ADMIN         | Revenue report            |
 | GET    | /api/admin/reports/capacity   | ADMIN         | Capacity report           |
-| PUT    | /api/admin/showtimes/{id}     | ADMIN         | Update showtime (date/time/price) |
 | GET    | /api/tickets/{ticketToken}    | Public        | Ticket QR validation (VALID/INVALID/USED) |
 | POST   | /api/payments/...             | Authenticated | Real payment initiation/confirm/cancel (PaymentProvider + Mock now, JazzCash/Easypaisa/SadaPay later) |
 
@@ -391,8 +394,8 @@ The following features are planned but **not yet implemented**:
 | **AdminDashboard charts** | Upgrade `AdminDashboard.jsx` from navigation cards to a stats dashboard with revenue/capacity charts | Not started |
 | **Error pages** | Dedicated 404/error pages on the frontend (currently handled per-page with error banners) | Partial |
 | **End-to-end testing** | Full test pass over backend APIs and frontend user flows (book → hold → mock pay → cancel, change seats, admin management) | Not started |
-| **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price only — movie/screen changes would invalidate seats/bookings). Should block if CONFIRMED/PENDING bookings exist | Not started |
-| **AdminShowtimePage management UI** | Upgrade the create-only showtime page into a full management page: list existing showtimes, delete button per showtime (the `DELETE` API exists but has **no frontend UI**), edit button that pre-fills the form and switches to update mode. Refresh the list after create/update/delete | Not started |
+| **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price only — movie/screen changes would invalidate seats/bookings). Blocks if CONFIRMED/PENDING bookings exist | ✅ Done (W3 Tue) |
+| **AdminShowtimePage management UI** | Upgraded the create-only showtime page into a full management page: list existing showtimes (with movie filter), delete button per showtime, edit button that pre-fills the form and switches to update mode (movie/screen locked). Refresh the list after create/update/delete. Active-bookings badge disables edit/delete while locked | ✅ Done (W3 Tue) |
 | **Payment integration** | JazzCash/Easypaisa/SadaPay via a `PaymentProvider` interface + Mock implementation. The 2-min PENDING hold and `POST /api/reservations/{id}/confirm` are already in place as the seam. Real flow: initiate provider payment → provider callback/webhook validates and flips to `CONFIRMED`. Abandon / failure / expiry releases seats. `payments` table tracks reservation_id, amount, provider, txn id, status, paid_at. Amount is always computed server-side (never trust the client). Production needs merchant/business accounts + sandbox keys; amounts in PKR; dev webhooks need a public URL (ngrok) | Not started |
 | **Digital ticket + QR validation** | After payment confirms, "Download Ticket" renders a printable ticket (movie, screen, date/time, seats, amount, ticket code + QR generated client-side with the `qrcode` lib). The venue/recipient scans the QR → `GET /api/tickets/{ticketToken}` returns VALID/INVALID (no user PII); the first successful scan marks the ticket **USED** → rescanning shows "ALREADY USED". INVALID if token unknown, reservation `CANCELLED`, or showtime has passed. Ticket identity stored server-side (e.g., `tickets` table) so the QR is verifiable even though it's rendered on the client | Not started |
 
@@ -410,7 +413,7 @@ The following features are planned but **not yet implemented**:
 1. ✅ **2-min seat hold + mock payment** — PENDING hold, `POST /api/reservations/{id}/confirm`, `HoldExpiryJob`, countdown UI (foundation for payment)
 2. ✅ **Overbooking prevention** — `SELECT FOR UPDATE` on seat rows + `uq_active_reservation_seat` partial unique index (done before payment so holds are race-safe)
 3. ✅ **Change seats** — `PUT /api/reservations/{id}/seats` + SeatSelectionPage change mode (PENDING + CONFIRMED)
-4. **Showtime management** — `PUT /api/admin/showtimes/{id}` + management UI on `AdminShowtimePage` (delete button uses the existing `DELETE` API; edit pre-fills the form). List existing showtimes with a movie/screen filter so admins can fix mistakes
+4. ✅ **Showtime management** — `PUT /api/admin/showtimes/{id}` + management UI on `AdminShowtimePage` (delete button uses the existing `DELETE` API; edit pre-fills the form). List existing showtimes with a movie/screen filter so admins can fix mistakes
 5. **Revenue + capacity reports** — feed the admin dashboard charts
 6. **AdminDashboard with charts/stats** — visual overview for admins
 7. **Error pages + polish** — 404 page, consistent loading states
@@ -424,4 +427,6 @@ The following features are planned but **not yet implemented**:
 
 **Work in progress.** Auth flow, genre CRUD, movie CRUD with poster/cast, public movie listing with genre filter, movie detail page, Cinema Noir dark theme, smooth scrolling, responsive layouts, file cleanup, 6 cinema screens, showtime creation with auto seat generation, showtime deletion with active-booking guard, tab-based movie listing with server-side filtering/sorting/pagination, showtime date picker on movie detail page, seat layout endpoint, visual seat selection grid, reservation creation with `@Transactional`, showtime details endpoint, booking confirmation page, cancel reservation, admin showtime creation page, admin bookings page with screen filter + bulk cancel, movie cascade delete (FK-safe, poster cleanup after DB success), the W2 Fri bug-fix pass (booking route guard, no-op removal, `screen_number` FK, orphaned-actor cleanup, dead-code removal), and the **W3 Mon pass** (2-min PENDING seat hold + mock-payment confirm, `HoldExpiryJob` 30s sweep, overbooking prevention with `SELECT FOR UPDATE` + `uq_active_reservation_seat` partial unique index, My Bookings page + `/api/reservations/my`, change seats for PENDING + CONFIRMED, admin booking listing PENDING handling, showtime delete guard including PENDING, docs) are all complete.
 
-Remaining Week 3 work: showtime update endpoint + management UI (delete UI missing), revenue/capacity reports, admin dashboard charts, error pages, end-to-end testing, **payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**, and **digital ticket with QR validation**. See the **Remaining Week 3 Features** section above.
+The **W3 Tue pass** added: `PUT /api/admin/showtimes/{id}` (update date/time/price, blocked while active bookings exist) + `GET /api/admin/showtimes` list (movie/screen filter) + `GET /api/admin/showtimes/{id}/seats` admin seat grid, the **AdminShowtimePage management UI** (list/delete/edit with active-booking lock), the **admin booking seat grid** on `/admin/reservations` (Screen → Show → Time → grid, click-to-cancel, cancel-all-per-showtime), and the bug #15 fix (malformed JSON → 400 instead of 500).
+
+Remaining Week 3 work: revenue/capacity reports (deferred to Week 4), admin dashboard charts, error pages, end-to-end testing, **payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**, and **digital ticket with QR validation**. See the **Remaining Week 3 Features** section above.
