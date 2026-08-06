@@ -392,12 +392,12 @@ The following features are planned but **not yet implemented**:
 | **Revenue report** | `GET /api/admin/reports/revenue` — total revenue grouped by movie/screen/date | Not started |
 | **Capacity report** | `GET /api/admin/reports/capacity` — seat occupancy percentage per showtime/screen | Not started |
 | **AdminDashboard charts** | Upgrade `AdminDashboard.jsx` from navigation cards to a stats dashboard with revenue/capacity charts | Not started |
-| **Error pages** | Dedicated 404/error pages on the frontend (currently handled per-page with error banners) | Partial |
+| **Error pages** | Dedicated 404 page (`NotFoundPage` + catch-all route); other pages keep per-page error banners | ✅ Done (W3 Thu) |
 | **End-to-end testing** | Full test pass over backend APIs and frontend user flows (book → hold → mock pay → cancel, change seats, admin management) | Not started |
 | **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price only — movie/screen changes would invalidate seats/bookings). Blocks if CONFIRMED/PENDING bookings exist | ✅ Done (W3 Tue) |
 | **AdminShowtimePage management UI** | Upgraded the create-only showtime page into a full management page: list existing showtimes (with movie filter), delete button per showtime, edit button that pre-fills the form and switches to update mode (movie/screen locked). Refresh the list after create/update/delete. Active-bookings badge disables edit/delete while locked | ✅ Done (W3 Tue) |
 | **Payment integration** | JazzCash/Easypaisa/SadaPay via a `PaymentProvider` interface + Mock implementation. The 2-min PENDING hold and `POST /api/reservations/{id}/confirm` are already in place as the seam. Real flow: initiate provider payment → provider callback/webhook validates and flips to `CONFIRMED`. Abandon / failure / expiry releases seats. `payments` table tracks reservation_id, amount, provider, txn id, status, paid_at. Amount is always computed server-side (never trust the client). Production needs merchant/business accounts + sandbox keys; amounts in PKR; dev webhooks need a public URL (ngrok) | Not started |
-| **Digital ticket + QR validation** | After payment confirms, "Download Ticket" renders a printable ticket (movie, screen, date/time, seats, amount, ticket code + QR generated client-side with the `qrcode` lib). The venue/recipient scans the QR → `GET /api/tickets/{ticketToken}` returns VALID/INVALID (no user PII); the first successful scan marks the ticket **USED** → rescanning shows "ALREADY USED". INVALID if token unknown, reservation `CANCELLED`, or showtime has passed. Ticket identity stored server-side (e.g., `tickets` table) so the QR is verifiable even though it's rendered on the client | Not started |
+| **Digital ticket + QR validation** | After payment confirms, "Download Ticket" renders a printable ticket (movie, screen, date/time, seats, amount, ticket code + QR generated client-side with the `qrcode` lib). The venue/recipient scans the QR → `GET /api/tickets/{ticketToken}` returns VALID/INVALID (no user PII); the first successful scan marks the ticket **USED** → rescanning shows "ALREADY USED". INVALID if token unknown, reservation `CANCELLED`, or showtime has passed. Ticket identity stored server-side (e.g., `tickets` table) so the QR is verifiable even though it's rendered on the client | 🟡 Partial — backend done (W3 Thu), QR page W3 Fri |
 
 ### Known Issues
 
@@ -416,10 +416,10 @@ The following features are planned but **not yet implemented**:
 4. ✅ **Showtime management** — `PUT /api/admin/showtimes/{id}` + management UI on `AdminShowtimePage` (delete button uses the existing `DELETE` API; edit pre-fills the form). List existing showtimes with a movie/screen filter so admins can fix mistakes
 5. **Revenue + capacity reports** — feed the admin dashboard charts
 6. **AdminDashboard with charts/stats** — visual overview for admins
-7. **Error pages + polish** — 404 page, consistent loading states
+7. ✅ **Error pages + polish** — 404 page (`NotFoundPage` + catch-all route); consistent loading states in progress
 8. **End-to-end testing** — verify all flows before Week 4 QA
 9. **Payment integration** — `PaymentProvider` interface + Mock provider, then swap in JazzCash/Easypaisa/SadaPay (the PENDING hold + `confirm` endpoint are the seam)
-10. **Digital ticket + QR validation** — ticket token + `GET /api/tickets/{token}` (VALID/INVALID/USED) + printable ticket page with QR
+10. 🟡 **Digital ticket + QR validation** — backend ✅ (`tickets` table + token on confirm + `GET /api/tickets/{token}` VALID/INVALID/USED); printable ticket page with QR ⬜ W3 Fri
 
 ---
 
@@ -429,4 +429,6 @@ The following features are planned but **not yet implemented**:
 
 The **W3 Tue pass** added: `PUT /api/admin/showtimes/{id}` (update date/time/price, blocked while active bookings exist) + `GET /api/admin/showtimes` list (movie/screen filter) + `GET /api/admin/showtimes/{id}/seats` admin seat grid, the **AdminShowtimePage management UI** (list/delete/edit with active-booking lock), the **admin booking seat grid** on `/admin/reservations` (Screen → Show → Time → grid, click-to-cancel, cancel-all-per-showtime), and the bug #15 fix (malformed JSON → 400 instead of 500).
 
-Remaining Week 3 work: revenue/capacity reports (deferred to Week 4), admin dashboard charts, error pages, end-to-end testing, **payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**, and **digital ticket with QR validation**. See the **Remaining Week 3 Features** section above.
+The **W3 Thu pass** added: the **digital ticket backend** — `tickets` table (token per confirmed reservation, FK cascade), `GET /api/tickets/{ticketToken}` (VALID/INVALID/ALREADY USED, no PII in INVALID, first scan marks USED), confirm now returns `ticketToken` — and the **404 page** (`NotFoundPage` + catch-all route). Both verified live (book → confirm → VALID → rescan ALREADY USED → unknown INVALID; data cleaned).
+
+Remaining Week 3 work: revenue/capacity reports (deferred to Week 4), admin dashboard charts, end-to-end testing, **payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**, and the **printable ticket page with QR** (digital ticket backend is complete). See the **Remaining Week 3 Features** section above.
