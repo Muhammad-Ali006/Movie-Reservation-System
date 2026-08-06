@@ -1,3 +1,116 @@
+# Session Summary — Thu Aug 6, 2026 (Week 3, Day 4 — digital ticket backend + 404 page)
+
+## What Was Completed
+
+### Digital ticket backend
+- `schema.sql` — new `tickets` table (`id`, `reservation_id` FK → `reservations(id)` ON DELETE CASCADE, `token VARCHAR(64) UNIQUE`, `status VARCHAR(20) DEFAULT 'ACTIVE'`, `created_at`); applied live via psql.
+- `model/Ticket.java` + `repository/TicketRepository.java` (`create`, `findByToken`, `findByReservationId`, `markUsed`).
+- `controller/TicketController.java` — `GET /api/tickets/{ticketToken}` (public): unknown token / cancelled reservation / passed showtime → `INVALID` (no user PII); first scan → `VALID` + marks ticket `USED` (response includes movieTitle, screenName, showDate, showTime, seats, totalAmount); rescan → `ALREADY USED`.
+- `ReservationController` — confirm now generates a token (24 random bytes, Base64 URL, no padding) and returns `ticketToken` in the confirm response; the idempotent CONFIRMED path re-returns the existing token.
+- `SecurityConfig` — `/api/tickets/**` added to the public GET matchers.
+
+### Error pages
+- `frontend/src/pages/NotFoundPage.jsx` — Cinema Noir themed 404 page with links back home / browse movies.
+- `frontend/src/App.jsx` — `<Route path="*" element={<NotFoundPage />} />` catch-all at the end of Routes.
+
+## Verification
+- `./mvnw.cmd compile -q` ✅ · `npm run build` ✅
+- Live smoke test ✅ — created movie + showtime, booked 2 seats, confirm returned the `ticketToken`, `GET /api/tickets/{token}` → VALID (movie/screen/seats/amount), rescan → ALREADY USED, unknown token → INVALID. Test data cleaned — **DB reset to 0 movies / 0 showtimes / 0 seats / 0 reservations** (2 users remain); backend stopped.
+
+## Current State
+- W3 Thu work (digital ticket backend + 404 page) complete and verified; committed (`991ac07` … `4ef5a7f`).
+- Docs updated: README.md (feature statuses, build order, Project Status), SCHEDULE.md (13/15), handoff.
+
+### Uncommitted Changes (user commits per-file as usual; only README.md is pushed)
+- `SESSION-SUMMARY.md` — this Thu section (docs only)
+
+## Tomorrow's Plan — Fri Aug 7 (Week 3, Day 5)
+
+### A. Printable ticket page with QR (backend `GET /api/tickets/{token}` is done)
+1. `cd frontend` → `npm install qrcode` (NOT installed yet — confirmed in `package.json`)
+2. Create `frontend/src/pages/TicketPage.jsx` + public route `/tickets/:token` in `App.jsx`
+   - Fetch `GET /api/tickets/{token}`
+   - **VALID** → render movie, screen, date/time, seats, amount, ticket code + client-side QR (`qrcode`) + **Print** button (`window.print()`)
+   - **ALREADY USED / INVALID** → friendly message, no crash
+3. "View Ticket" entry points:
+   - `BookingConfirmationPage` (after confirm — uses `ticketToken` from confirm response)
+   - `UserReservationsPage` for CONFIRMED — ⚠️ DECIDE: add `ticketToken` to `/reservations/my` response, OR only show View Ticket on the confirmation page
+4. Verify: `npm run build` ✅ + `./mvnw.cmd compile -q` ✅
+
+### B. End-to-end test pass (SCHEDULE item 10)
+- User: book → hold (2:00 countdown) → mock pay → view ticket → scan VALID → rescan ALREADY USED → cancel; change seats on PENDING + CONFIRMED
+- Expiry: backdate `pending_until` → `HoldExpiryJob` releases seats
+- Admin: showtime create/edit/delete (blocked while booked), bookings list + bulk cancel, seat grid (click-to-cancel), movie CRUD + delete guard, genres
+- Errors: malformed JSON → 400, bad URL → 404 page, double-cancel, confirm after expiry, seat taken
+- Clean all test data → DB back to 0 movies / 0 showtimes / 0 seats / 0 reservations (2 users remain)
+
+### C. Doc wrap-up
+- Add W3 Fri section to SESSION-SUMMARY.md; update handoff (Latest Session Fri, progress 14-15/15); commit per-file as usual (push README only)
+
+### Deferred (get back to later)
+- Account page (`GET /api/auth/me`), admin dashboard/reports (Week 4)
+
+---
+
+# Session Summary — Tue Aug 4, 2026 (Week 3, Day 2 — showtime management + admin seat grid)
+
+## What Was Completed
+
+### Bug: Malformed JSON body → 500 (bug #15)
+- **Symptom** — sending a malformed request body (e.g. a missing comma, `[1351,]`) returned a 500 instead of a structured 400.
+- **Root cause** — `GlobalExceptionHandler` had no handler for Spring's `HttpMessageNotReadableException`.
+- **Fix** — added `@ExceptionHandler(HttpMessageNotReadableException.class)` → 400 `{ "message": "Invalid request body" }`.
+- **Verified live** — a broken body now returns 400 with the message.
+
+### Showtime management (backend + frontend)
+- `GET /api/admin/showtimes?movieId=&screenId=` — list showtimes joined with movie/screen + active-booking counts (enriched list driving the management page filters).
+- `PUT /api/admin/showtimes/{id}` — update date/time/price **only** (movie/screen locked; changing them would invalidate seats/bookings). **Blocks** while any active (PENDING + CONFIRMED) booking exists: `"Cannot update showtime: N active booking(s) exist. Cancel them first."`; 404 if the showtime is missing.
+- `AdminShowtimePage.jsx` rewritten into a management page: list existing showtimes + movie filter, Edit (pre-fills form → update mode, movie/screen locked), Delete, and an active-bookings badge that disables edit/delete while locked. List refreshes after create/update/delete.
+- Repos: `ShowtimeRepository.findAll()`, `updateDateTimePrice(id, date, time, price)`; `ReservationRepository.countActiveByShowtimeId(id)`.
+
+### Admin booking seat grid
+- `GET /api/admin/showtimes/{id}/seats` — admin seat grid: `status` AVAILABLE / HELD / BOOKED + `reservationId`, `username`, `totalAmount` per seat (aliases quoted for Postgres).
+- `AdminReservationPage.jsx` rewritten: Screen → Show (movie) → Time dropdowns → full cinema seat grid (same layout as the user picker). Click a booked/held seat → confirm (owner + amount) → cancel that reservation. "Cancel All (showtime)" reuses the existing bulk-cancel API. The card list is kept under "All Screens".
+
+### AdminDashboard
+- Showtimes card text → "Create, edit, or remove showtimes" (management, not just creation).
+
+## Verification
+- `./mvnw.cmd compile -q` ✅ · `npm run build` ✅
+- Live smoke test ✅ — created a showtime, listed with movie filter, grid showed AVAILABLE → HELD-with-username after a booking, PUT + DELETE blocked while a booking was active (exact message), cancel released the seat, delete then succeeded, malformed JSON → 400.
+- Test data cleaned afterwards — **DB reset to 0 movies / 0 showtimes / 0 seats / 0 reservations** (2 users remain); backend stopped.
+
+## Current State
+- W3 Tue work (showtime management + admin seat grid + bug #15) complete and verified; W3 Mon work + the W3 Tue alias fix (#16) are committed (`fdc29c0` … `2e3d580`).
+- Docs updated: README.md (build order, Known Issues, Project Status), BUGS.md (last-reviewed date; #15 + showtime statuses), SCHEDULE.md (11/15, Tue items ✅).
+
+### Uncommitted Changes (user commits per-file as usual; only README.md is pushed)
+```
+src/main/java/.../exception/GlobalExceptionHandler.java     — 400 for malformed JSON (#15)
+src/main/java/.../repository/ShowtimeRepository.java        — findAll + updateDateTimePrice
+src/main/java/.../repository/ReservationRepository.java     — countActiveByShowtimeId
+src/main/java/.../controller/AdminShowtimeController.java   — GET list + PUT update + GET seats
+frontend/src/pages/AdminShowtimePage.jsx                    — management UI (list/edit/delete/filter)
+frontend/src/pages/AdminReservationPage.jsx                 — Screen → Show → Time → seat grid
+frontend/src/pages/AdminDashboard.jsx                       — showtimes card text
+README.md                                                   — docs (the only pushed doc)
+```
+SCHEDULE.md, BUGS.md, SESSION-SUMMARY.md, WEEK1-REPORT.md, `.opencode/` are gitignored (local-only).
+
+## Tomorrow's Plan — Wed Aug 5 (Week 3, Day 3)
+- Frontend: AdminDashboard charts/stats (upgrade navigation cards → stats dashboard)
+- Backend: Payment integration — `PaymentProvider` interface + Mock implementation, `payments` table, provider pay/confirm endpoints
+
+## Critical Notes
+- Start backend: `./mvnw.cmd spring-boot:run`
+- Start frontend: `cd frontend && npm run dev`
+- Admin login: username `admin`, password `admin123`
+- DB: `movie_db`, localhost:5432, user `postgres`, password `root`
+- **Postgres quirk:** always quote camelCase aliases in SQL (`AS "showtimeId"`) — unquoted identifiers fold to lowercase and break `queryForList` map keys.
+- Showtime PUT/DELETE block while PENDING + CONFIRMED bookings exist (cancel first).
+
+---
+
 # Session Summary — Mon Aug 3, 2026 (Week 3, Day 1 — bug-fix follow-up)
 
 ## What Was Completed
