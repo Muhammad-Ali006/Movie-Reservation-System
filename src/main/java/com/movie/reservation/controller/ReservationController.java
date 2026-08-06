@@ -6,9 +6,11 @@ import com.movie.reservation.exception.UnauthorizedException;
 import com.movie.reservation.model.Reservation;
 import com.movie.reservation.model.Seat;
 import com.movie.reservation.model.Showtime;
+import com.movie.reservation.model.Ticket;
 import com.movie.reservation.repository.ReservationRepository;
 import com.movie.reservation.repository.SeatRepository;
 import com.movie.reservation.repository.ShowtimeRepository;
+import com.movie.reservation.repository.TicketRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -29,15 +32,18 @@ public class ReservationController {
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
     private final ReservationRepository reservationRepository;
+    private final TicketRepository ticketRepository;
     private final JdbcTemplate jdbcTemplate;
 
     public ReservationController(ShowtimeRepository showtimeRepository,
                                   SeatRepository seatRepository,
                                   ReservationRepository reservationRepository,
+                                  TicketRepository ticketRepository,
                                   JdbcTemplate jdbcTemplate) {
         this.showtimeRepository = showtimeRepository;
         this.seatRepository = seatRepository;
         this.reservationRepository = reservationRepository;
+        this.ticketRepository = ticketRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -123,7 +129,7 @@ public class ReservationController {
 
         if (isOwnerOrAdmin(reservation, authentication)) {
             if ("CONFIRMED".equals(reservation.getStatus())) {
-                return ResponseEntity.ok(buildConfirmResponse(reservation));
+                return ResponseEntity.ok(buildConfirmResponse(reservation, findTicketToken(id)));
             }
             if (!"PENDING".equals(reservation.getStatus())) {
                 throw new IllegalArgumentException("Reservation is already cancelled");
@@ -133,9 +139,28 @@ public class ReservationController {
             }
             reservationRepository.confirmReservation(id);
             reservation.setStatus("CONFIRMED");
+            return ResponseEntity.ok(buildConfirmResponse(reservation, createTicket(id)));
         }
 
-        return ResponseEntity.ok(buildConfirmResponse(reservation));
+        return ResponseEntity.ok(buildConfirmResponse(reservation, null));
+    }
+
+    private String createTicket(Long reservationId) {
+        String token = generateTicketToken();
+        ticketRepository.create(reservationId, token);
+        return token;
+    }
+
+    private String findTicketToken(Long reservationId) {
+        return ticketRepository.findByReservationId(reservationId)
+                .map(Ticket::getToken)
+                .orElse(null);
+    }
+
+    private String generateTicketToken() {
+        byte[] bytes = new byte[24];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     @PutMapping("/{id}/cancel")
@@ -290,13 +315,16 @@ public class ReservationController {
         return true;
     }
 
-    private Map<String, Object> buildConfirmResponse(Reservation reservation) {
+    private Map<String, Object> buildConfirmResponse(Reservation reservation, String ticketToken) {
         Map<String, Object> response = new HashMap<>();
         response.put("id", reservation.getId());
         response.put("showtimeId", reservation.getShowtimeId());
         response.put("status", reservation.getStatus());
         response.put("totalAmount", reservation.getTotalAmount());
         response.put("confirmedAt", LocalDateTime.now());
+        if (ticketToken != null) {
+            response.put("ticketToken", ticketToken);
+        }
         return response;
     }
 }
