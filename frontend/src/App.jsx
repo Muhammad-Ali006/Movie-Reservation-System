@@ -16,6 +16,7 @@ import BookingConfirmationPage from './pages/BookingConfirmationPage'
 import UserReservationsPage from './pages/UserReservationsPage'
 import AdminShowtimePage from './pages/AdminShowtimePage'
 import AdminReservationPage from './pages/AdminReservationPage'
+import TicketPage from './pages/TicketPage'
 import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
@@ -132,6 +133,7 @@ function App() {
               </AdminRoute>
             }
           />
+          <Route path="/tickets/:token" element={<TicketPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
