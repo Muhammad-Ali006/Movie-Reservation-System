@@ -1,3 +1,57 @@
+# Session Summary — Fri Aug 7, 2026 (Week 3, Day 5 — printable ticket QR page + E2E test pass)
+
+## What Was Completed
+
+### Printable ticket page with QR
+- **Design decision** — the existing `GET /api/tickets/{token}` scan endpoint marks the ticket **USED** on its first call, so the buyer's view/print page cannot use it (opening your own ticket would consume it). Added a **non-consuming** `GET /api/tickets/{token}/details` that returns the same payload (`movieTitle`, `screenName`, `showDate`, `showTime`, `seats`, `totalAmount`, `ticketToken`) **without** marking used; INVALID for unknown/cancelled/passed. The scan endpoint is unchanged (first scan → VALID + marks USED, rescan → ALREADY USED).
+- `TicketController.java` — shared validation refactored into `buildTicketResponse(ticket, markAsUsed)`; `/details` calls it with `false`, the scan endpoint with `true`.
+- `ReservationController` `GET /api/reservations/my` — added `ticketToken` via a correlated subquery (`(SELECT tk.token FROM tickets tk WHERE tk.reservation_id = r.id ORDER BY tk.id DESC LIMIT 1) AS "ticketToken"`), so CONFIRMED bookings link to their ticket.
+- `frontend/src/pages/TicketPage.jsx` (new) — public route `/tickets/:token`: Cinema Noir ticket card (movie, screen, date/time, seats, amount, ticket code) + client-side QR (`qrcode` lib) + **Print** button (`window.print()` with a scoped print stylesheet that hides nav/buttons and inverts to white). VALID → ticket; **ALREADY USED / INVALID** → friendly message with Browse Movies / My Bookings links.
+- `App.jsx` — `<Route path="/tickets/:token" element={<TicketPage />} />` (public, before the catch-all).
+- **View Ticket entry points** — `BookingConfirmationPage` confirmed state (uses `confirmed.ticketToken` from the confirm response) and `UserReservationsPage` (CONFIRMED rows that have `ticketToken`).
+
+### Bug: unknown `/api/**` URL → 500 (bug #17)
+- **Symptom** — a GET to an unmapped API path (e.g. `/api/reservations/999999`) returned **500** instead of 404.
+- **Root cause** — Spring's `NoResourceFoundException` (thrown when no controller matches) had no handler in `GlobalExceptionHandler`.
+- **Fix** — added `@ExceptionHandler(NoResourceFoundException.class)` → 404 `{ "message": "Resource not found" }`.
+
+### End-to-end test pass (SCHEDULE item 10) — 39/39
+- **User**: book → PENDING hold (2:00) → mock pay (confirm) → `ticketToken` returned → `details` VALID (non-consuming) → scan VALID → rescan ALREADY USED → `details` now ALREADY USED → `/my` includes `ticketToken` → change seats on CONFIRMED (old seats released, new held, total recomputed) → change seats on PENDING → confirm → seat-taken → 400.
+- **Expiry**: backdated `pending_until` → `HoldExpiryJob` auto-cancelled + released the seat; confirm-after-expiry → 400.
+- **Admin**: showtime update + delete blocked while CONFIRMED bookings exist (400) → admin seat grid (BOOKED + username + amount) → bulk cancel → update/delete succeed; movie delete blocked with CONFIRMED booking (400) → delete after cancel (200); genre create/list/delete.
+- **Errors**: malformed JSON → 400, double-cancel → 400, unknown ticket (scan + details) → INVALID, unmapped API path → 404.
+- Test data cleaned — **DB reset to 0 movies / 0 showtimes / 0 seats / 0 reservations / 0 tickets** (2 users, 6 screens, 8 genres remain); backend stopped.
+
+## Verification
+- `./mvnw.cmd compile -q` ✅ · `npm run build` ✅ · `npm run lint` ✅ (no new warnings)
+
+## Current State
+- W3 Fri work (ticket QR page + details endpoint + bug #17 + E2E pass) complete and verified. W3 Thu work was committed earlier (`4b03d23` … `4ef5a7f`).
+
+### Uncommitted Changes (user commits per-file as usual; only README.md is pushed)
+- `src/main/java/.../controller/TicketController.java` — `/details` endpoint + `buildTicketResponse` refactor
+- `src/main/java/.../controller/ReservationController.java` — `ticketToken` in `/my`
+- `src/main/java/.../exception/GlobalExceptionHandler.java` — 404 for unmapped API paths (#17)
+- `frontend/src/pages/TicketPage.jsx` — NEW printable QR ticket page
+- `frontend/src/App.jsx` — `/tickets/:token` route
+- `frontend/src/pages/BookingConfirmationPage.jsx` — View Ticket button
+- `frontend/src/pages/UserReservationsPage.jsx` — View Ticket button on CONFIRMED
+- `frontend/package.json` + `package-lock.json` — `qrcode` dependency
+- `README.md` — docs (the only pushed doc)
+
+## Tomorrow's Plan — Mon Aug 10 (Week 4, Day 1)
+- Week 4 Mon per SCHEDULE: test all endpoints, fix edge cases. Carried-over if time: account page (`GET /api/auth/me`), revenue/capacity reports, AdminDashboard charts, payment integration (PaymentProvider + Mock).
+
+## Critical Notes
+- Start backend: `./mvnw.cmd spring-boot:run`
+- Start frontend: `cd frontend && npm run dev`
+- Admin login: username `admin`, password `admin123`
+- DB: `movie_db`, localhost:5432, user `postgres`, password `root`
+- **`GET /api/tickets/{token}` consumes the ticket (marks USED). Use `GET /api/tickets/{token}/details` for display-only.**
+- **Postgres quirk:** always quote camelCase aliases in SQL (`AS "showtimeId"`).
+
+---
+
 # Session Summary — Thu Aug 6, 2026 (Week 3, Day 4 — digital ticket backend + 404 page)
 
 ## What Was Completed
