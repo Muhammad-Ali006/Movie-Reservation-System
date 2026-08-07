@@ -349,12 +349,17 @@ Auto-seeded on startup:
 | GET    | /api/admin/reservations?screenId={id} | ADMIN  | List all reservations, optionally filtered by screen |
 | PUT    | /api/admin/reservations/bulk-cancel   | ADMIN  | Cancel multiple reservations in one request |
 
+### Tickets
+| Method | Endpoint                              | Access | Description                              |
+|--------|---------------------------------------|--------|------------------------------------------|
+| GET    | /api/tickets/{ticketToken}            | Public | Scan endpoint — VALID + marks **USED** on first scan; ALREADY USED on rescan; INVALID if unknown/CANCELLED/passed (no PII) |
+| GET    | /api/tickets/{ticketToken}/details    | Public | Display-only (non-consuming) ticket payload for the buyer's ticket page |
+
 ### Up Next (Week 3 remaining)
 | Method | Endpoint                      | Access        | Description               |
 |--------|-------------------------------|---------------|---------------------------|
 | GET    | /api/admin/reports/revenue    | ADMIN         | Revenue report            |
 | GET    | /api/admin/reports/capacity   | ADMIN         | Capacity report           |
-| GET    | /api/tickets/{ticketToken}    | Public        | Ticket QR validation (VALID/INVALID/USED) |
 | POST   | /api/payments/...             | Authenticated | Real payment initiation/confirm/cancel (PaymentProvider + Mock now, JazzCash/Easypaisa/SadaPay later) |
 
 ---
@@ -393,11 +398,11 @@ The following features are planned but **not yet implemented**:
 | **Capacity report** | `GET /api/admin/reports/capacity` — seat occupancy percentage per showtime/screen | Not started |
 | **AdminDashboard charts** | Upgrade `AdminDashboard.jsx` from navigation cards to a stats dashboard with revenue/capacity charts | Not started |
 | **Error pages** | Dedicated 404 page (`NotFoundPage` + catch-all route); other pages keep per-page error banners | ✅ Done (W3 Thu) |
-| **End-to-end testing** | Full test pass over backend APIs and frontend user flows (book → hold → mock pay → cancel, change seats, admin management) | Not started |
+| **End-to-end testing** | Full test pass over backend APIs and frontend user flows (book → hold → mock pay → cancel, change seats, admin management) | ✅ Done (W3 Fri, 39/39 PASS live) |
 | **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price only — movie/screen changes would invalidate seats/bookings). Blocks if CONFIRMED/PENDING bookings exist | ✅ Done (W3 Tue) |
 | **AdminShowtimePage management UI** | Upgraded the create-only showtime page into a full management page: list existing showtimes (with movie filter), delete button per showtime, edit button that pre-fills the form and switches to update mode (movie/screen locked). Refresh the list after create/update/delete. Active-bookings badge disables edit/delete while locked | ✅ Done (W3 Tue) |
 | **Payment integration** | JazzCash/Easypaisa/SadaPay via a `PaymentProvider` interface + Mock implementation. The 2-min PENDING hold and `POST /api/reservations/{id}/confirm` are already in place as the seam. Real flow: initiate provider payment → provider callback/webhook validates and flips to `CONFIRMED`. Abandon / failure / expiry releases seats. `payments` table tracks reservation_id, amount, provider, txn id, status, paid_at. Amount is always computed server-side (never trust the client). Production needs merchant/business accounts + sandbox keys; amounts in PKR; dev webhooks need a public URL (ngrok) | Not started |
-| **Digital ticket + QR validation** | After payment confirms, "Download Ticket" renders a printable ticket (movie, screen, date/time, seats, amount, ticket code + QR generated client-side with the `qrcode` lib). The venue/recipient scans the QR → `GET /api/tickets/{ticketToken}` returns VALID/INVALID (no user PII); the first successful scan marks the ticket **USED** → rescanning shows "ALREADY USED". INVALID if token unknown, reservation `CANCELLED`, or showtime has passed. Ticket identity stored server-side (e.g., `tickets` table) so the QR is verifiable even though it's rendered on the client | 🟡 Partial — backend done (W3 Thu), QR page W3 Fri |
+| **Digital ticket + QR validation** | After payment confirms, "Download Ticket" renders a printable ticket (movie, screen, date/time, seats, amount, ticket code + QR generated client-side with the `qrcode` lib). The venue/recipient scans the QR → `GET /api/tickets/{ticketToken}` returns VALID/INVALID (no user PII); the first successful scan marks the ticket **USED** → rescanning shows "ALREADY USED". INVALID if token unknown, reservation `CANCELLED`, or showtime has passed. Ticket identity stored server-side (`tickets` table) so the QR is verifiable even though it's rendered on the client. The buyer's own page uses the non-consuming `GET /api/tickets/{ticketToken}/details` so viewing/printing never consumes the ticket | 🟢 Done (W3 Thu backend + W3 Fri QR page) |
 
 ### Known Issues
 
@@ -406,6 +411,8 @@ The following features are planned but **not yet implemented**:
 > The bugs found in Week 2 (booking route guard, no-op block, `screen_number` FK, orphaned actors, dead code) were all fixed on W2 Fri — see **BUGS.md** for the full record.
 >
 > W3 Tue fix: **Postgres unquoted-alias folding** (#16) — raw `queryForList` queries used unquoted camelCase aliases that PostgreSQL folds to lowercase, so `/api/reservations/my`, `/api/showtimes/{id}/seats`, and `/api/admin/reservations` returned lowercase keys. The frontend's camelCase reads (`showtimeId`, `movieTitle`, `seatNumber`, `heldByMe`, ...) were `undefined`, which broke My Bookings "Change Seats" (`/booking/undefined/change` → "Failed to load seat layout"), showed blank titles / `$NaN`, and rendered the seat grid without labels/HELD/`heldByMe`. Fixed by quoting the aliases in the 3 queries plus passing `changeMode: true` in the My Bookings navigation.
+>
+> W3 Fri fix: **unknown `/api/**` URL → 500** (#17) — a GET to an unmapped API path (e.g. `/api/reservations/999999`) threw Spring's `NoResourceFoundException`, which had no handler, so it returned 500 instead of 404. Fixed with an `@ExceptionHandler(NoResourceFoundException.class)` → 404 `{ "message": "Resource not found" }`.
 
 ### Suggested build order
 
@@ -417,9 +424,9 @@ The following features are planned but **not yet implemented**:
 5. **Revenue + capacity reports** — feed the admin dashboard charts
 6. **AdminDashboard with charts/stats** — visual overview for admins
 7. ✅ **Error pages + polish** — 404 page (`NotFoundPage` + catch-all route); consistent loading states in progress
-8. **End-to-end testing** — verify all flows before Week 4 QA
+8. ✅ **End-to-end testing** — full live test pass W3 Fri (39/39) covering book → hold → mock pay → ticket, change seats, hold expiry, admin showtime/movie guards + bulk cancel, seat grid, genre CRUD, and error cases
 9. **Payment integration** — `PaymentProvider` interface + Mock provider, then swap in JazzCash/Easypaisa/SadaPay (the PENDING hold + `confirm` endpoint are the seam)
-10. 🟡 **Digital ticket + QR validation** — backend ✅ (`tickets` table + token on confirm + `GET /api/tickets/{token}` VALID/INVALID/USED); printable ticket page with QR ⬜ W3 Fri
+10. ✅ **Digital ticket + QR validation** — backend `tickets` table + token on confirm + `GET /api/tickets/{token}` VALID/INVALID/USED (W3 Thu); printable ticket page with QR + non-consuming `/details` endpoint + View Ticket entry points (W3 Fri)
 
 ---
 
@@ -431,4 +438,6 @@ The **W3 Tue pass** added: `PUT /api/admin/showtimes/{id}` (update date/time/pri
 
 The **W3 Thu pass** added: the **digital ticket backend** — `tickets` table (token per confirmed reservation, FK cascade), `GET /api/tickets/{ticketToken}` (VALID/INVALID/ALREADY USED, no PII in INVALID, first scan marks USED), confirm now returns `ticketToken` — and the **404 page** (`NotFoundPage` + catch-all route). Both verified live (book → confirm → VALID → rescan ALREADY USED → unknown INVALID; data cleaned).
 
-Remaining Week 3 work: revenue/capacity reports (deferred to Week 4), admin dashboard charts, end-to-end testing, **payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**, and the **printable ticket page with QR** (digital ticket backend is complete). See the **Remaining Week 3 Features** section above.
+The **W3 Fri pass** finished the digital ticket feature and closed Week 3: **non-consuming `GET /api/tickets/{ticketToken}/details`** (the scan endpoint marks USED on first call, so the buyer's own page must not use it), **`ticketToken` in `GET /api/reservations/my`**, the **printable QR ticket page** (`/tickets/:token` — Cinema Noir ticket card + client-side QR via `qrcode` + Print; VALID / ALREADY USED / INVALID states) with **View Ticket** buttons on the confirmation page and My Bookings, bug #17 (unknown `/api/**` → 404), and a **full live end-to-end test pass (39/39)** — book → hold → mock pay → ticket VALID→USED, change seats on PENDING + CONFIRMED, backdated-hold expiry, admin showtime/movie delete+update guards, bulk cancel, admin seat grid, genre CRUD, and error cases (400 malformed JSON / double-cancel / seat-taken, 404, INVALID). All E2E data cleaned — DB reset to baseline.
+
+Remaining Week 3 work: **only the payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**; revenue/capacity reports, admin dashboard charts, and the account page were deferred to Week 4. See the **Remaining Week 3 Features** section above.
