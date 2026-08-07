@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
-import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Clock, Pencil } from 'lucide-react'
+import { ArrowLeft, CheckCircle, AlertCircle, Loader2, Clock, Pencil, Ticket } from 'lucide-react'
 import api from '../utils/api'
 
 function BookingConfirmationPage() {
@@ -227,6 +227,19 @@ function BookingConfirmationPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {confirmed.ticketToken && (
+              <Link
+                to={`/tickets/${confirmed.ticketToken}`}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                style={{
+                  backgroundColor: 'transparent',
+                  color: 'var(--color-success)',
+                  border: '1px solid var(--color-success)',
+                }}
+              >
+                <Ticket className="w-4 h-4" /> View Ticket
+              </Link>
+            )}
             <Link
               to="/movies"
               className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold"
