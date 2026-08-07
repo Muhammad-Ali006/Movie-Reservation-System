@@ -31,30 +31,44 @@ public class TicketController {
         if (ticket == null) {
             return ResponseEntity.ok(buildInvalid("Invalid ticket"));
         }
+        return ResponseEntity.ok(buildTicketResponse(ticket, true));
+    }
 
+    @GetMapping("/{ticketToken}/details")
+    public ResponseEntity<Map<String, Object>> getTicketDetails(@PathVariable String ticketToken) {
+        Ticket ticket = ticketRepository.findByToken(ticketToken).orElse(null);
+        if (ticket == null) {
+            return ResponseEntity.ok(buildInvalid("Invalid ticket"));
+        }
+        return ResponseEntity.ok(buildTicketResponse(ticket, false));
+    }
+
+    private Map<String, Object> buildTicketResponse(Ticket ticket, boolean markAsUsed) {
         Map<String, Object> details = loadTicketDetails(ticket.getReservationId());
         if (details == null) {
-            return ResponseEntity.ok(buildInvalid("Invalid ticket"));
+            return buildInvalid("Invalid ticket");
         }
 
         if ("CANCELLED".equals(details.get("reservationStatus"))) {
-            return ResponseEntity.ok(buildInvalid("This ticket's reservation was cancelled"));
+            return buildInvalid("This ticket's reservation was cancelled");
         }
 
         LocalDateTime showDateTime = parseShowDateTime(details.get("showDate"), details.get("showTime"));
         if (showDateTime != null && LocalDateTime.now().isAfter(showDateTime)) {
-            return ResponseEntity.ok(buildInvalid("This ticket's showtime has passed"));
+            return buildInvalid("This ticket's showtime has passed");
         }
 
         if ("USED".equals(ticket.getStatus())) {
             Map<String, Object> response = new HashMap<>();
             response.put("status", "ALREADY USED");
             response.put("message", "This ticket has already been scanned");
-            return ResponseEntity.ok(response);
+            return response;
         }
 
-        ticketRepository.markUsed(ticket.getId());
-        ticket.setStatus("USED");
+        if (markAsUsed) {
+            ticketRepository.markUsed(ticket.getId());
+            ticket.setStatus("USED");
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("status", "VALID");
@@ -67,7 +81,7 @@ public class TicketController {
         response.put("showTime", details.get("showTime"));
         response.put("seats", details.get("seats"));
         response.put("totalAmount", details.get("totalAmount"));
-        return ResponseEntity.ok(response);
+        return response;
     }
 
     private Map<String, Object> loadTicketDetails(Long reservationId) {
