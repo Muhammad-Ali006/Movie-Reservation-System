@@ -283,6 +283,7 @@ public class ReservationController {
                 r.total_amount AS "totalAmount",
                 r.created_at AS "createdAt",
                 r.pending_until AS "pendingUntil",
+                (SELECT tk.token FROM tickets tk WHERE tk.reservation_id = r.id ORDER BY tk.id DESC LIMIT 1) AS "ticketToken",
                 m.title AS "movieTitle",
                 m.slug AS "movieSlug",
                 sc.id AS "screenId",
