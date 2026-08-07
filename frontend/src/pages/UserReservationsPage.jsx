@@ -187,6 +187,19 @@ function UserReservationsPage() {
 
                 {canAct && (
                   <div className="flex flex-wrap gap-3">
+                    {res.status === 'CONFIRMED' && res.ticketToken && (
+                      <Link
+                        to={`/tickets/${res.ticketToken}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: 'var(--color-success)',
+                          border: '1px solid var(--color-success)',
+                        }}
+                      >
+                        <Ticket className="w-4 h-4" /> View Ticket
+                      </Link>
+                    )}
                     <button
                       onClick={() => handleChangeSeats(res)}
                       disabled={busyId === res.id}
