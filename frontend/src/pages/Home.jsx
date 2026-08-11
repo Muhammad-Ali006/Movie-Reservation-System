@@ -65,20 +65,6 @@ function Home() {
             Browse Movies
           </Link>
         )}
-
-        {/* Features */}
-        <div className="flex flex-wrap gap-8 mt-16">
-          {[
-            { label: '500+', desc: 'Movies Available' },
-            { label: '4K', desc: 'Ultra HD Quality' },
-            { label: '24/7', desc: 'Showtimes' },
-          ].map((item, i) => (
-            <div key={i}>
-              <div className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>{item.label}</div>
-              <div className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{item.desc}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Decorative gradient orb */}
