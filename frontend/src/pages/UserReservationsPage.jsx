@@ -154,7 +154,7 @@ function UserReservationsPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>
-                      ${parseFloat(res.totalAmount).toFixed(2)}
+                      PKR {parseFloat(res.totalAmount).toFixed(2)}
                     </p>
                     <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
                       {res.status === 'PENDING' && res.pendingUntil
