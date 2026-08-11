@@ -5,6 +5,7 @@ import com.movie.reservation.dto.request.SignupRequest;
 import com.movie.reservation.dto.response.AuthResponse;
 import com.movie.reservation.model.User;
 import com.movie.reservation.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<Map<String, String>> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<Map<String, String>> signup(@Valid @RequestBody SignupRequest request) {
         authService.signup(request);
         Map<String, String> response = new HashMap<>();
         response.put("message", "User registered successfully");
