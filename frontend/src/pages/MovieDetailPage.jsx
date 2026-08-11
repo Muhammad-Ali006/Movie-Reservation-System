@@ -218,7 +218,7 @@ function MovieDetailPage() {
                         {formatTime(showtime.showTime)}
                       </span>
                       <span className="text-lg font-semibold" style={{ color: 'var(--color-accent)' }}>
-                        ${showtime.pricePerSeat}
+                        PKR {showtime.pricePerSeat}
                       </span>
                     </div>
 
