@@ -33,6 +33,13 @@ public class MovieController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "6") int size) {
 
+        if (page < 0) {
+            throw new IllegalArgumentException("Page must be 0 or greater");
+        }
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException("Size must be between 1 and 100");
+        }
+
         int offset = page * size;
 
         List<Movie> movies = movieRepository.findAllFiltered(
