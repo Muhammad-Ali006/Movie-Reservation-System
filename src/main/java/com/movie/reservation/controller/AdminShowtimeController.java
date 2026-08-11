@@ -16,6 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,12 +49,33 @@ public class AdminShowtimeController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createShowtime(@RequestBody ShowtimeRequest request) {
+        if (request.getMovieId() == null) {
+            throw new IllegalArgumentException("movieId is required");
+        }
+        if (request.getScreenId() == null) {
+            throw new IllegalArgumentException("screenId is required");
+        }
+        if (request.getShowDate() == null || request.getShowTime() == null || request.getPricePerSeat() == null) {
+            throw new IllegalArgumentException("showDate, showTime, and pricePerSeat are required");
+        }
+        if (request.getPricePerSeat().signum() < 0) {
+            throw new IllegalArgumentException("Price per seat cannot be negative");
+        }
+        if (request.getShowDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Show date cannot be in the past");
+        }
+
         if (!movieRepository.existsById(request.getMovieId())) {
             throw new ResourceNotFoundException("Movie not found");
         }
 
         Screen screen = screenRepository.findById(request.getScreenId())
                 .orElseThrow(() -> new ResourceNotFoundException("Screen not found"));
+
+        if (showtimeRepository.existsWithSameMovieScreenDateTime(
+                request.getMovieId(), screen.getId().intValue(), request.getShowDate(), request.getShowTime())) {
+            throw new IllegalArgumentException("A showtime for this movie already exists on this screen at this date and time");
+        }
 
         Showtime showtime = new Showtime();
         showtime.setMovieId(request.getMovieId());
@@ -148,6 +170,9 @@ public class AdminShowtimeController {
         }
         if (request.getPricePerSeat().signum() < 0) {
             throw new IllegalArgumentException("Price per seat cannot be negative");
+        }
+        if (request.getShowDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Show date cannot be in the past");
         }
 
         int activeBookings = reservationRepository.countActiveByShowtimeId(id);
