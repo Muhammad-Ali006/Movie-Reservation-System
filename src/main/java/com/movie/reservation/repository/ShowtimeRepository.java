@@ -3,14 +3,18 @@ package com.movie.reservation.repository;
 import com.movie.reservation.model.Showtime;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Repository
@@ -45,14 +49,29 @@ public class ShowtimeRepository {
         return showtimes.stream().findFirst();
     }
 
+    public boolean existsWithSameMovieScreenDateTime(Long movieId, int screenNumber, LocalDate showDate, LocalTime showTime) {
+        String sql = "SELECT COUNT(*) FROM showtimes WHERE movie_id = ? AND screen_number = ? AND show_date = ? AND show_time = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, movieId, screenNumber, showDate, showTime);
+        return count != null && count > 0;
+    }
+
     public Showtime save(Showtime showtime) {
         String sql = "INSERT INTO showtimes (movie_id, show_date, show_time, screen_number, total_seats, price_per_seat) VALUES (?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, showtime.getMovieId(), showtime.getShowDate(), showtime.getShowTime(),
-                showtime.getScreenNumber(), showtime.getTotalSeats(), showtime.getPricePerSeat());
 
-        String findSql = "SELECT * FROM showtimes WHERE movie_id = ? AND show_date = ? AND show_time = ? AND screen_number = ? ORDER BY id DESC";
-        return jdbcTemplate.queryForObject(findSql, showtimeRowMapper, showtime.getMovieId(),
-                showtime.getShowDate(), showtime.getShowTime(), showtime.getScreenNumber());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"});
+            ps.setLong(1, showtime.getMovieId());
+            ps.setDate(2, java.sql.Date.valueOf(showtime.getShowDate()));
+            ps.setTime(3, java.sql.Time.valueOf(showtime.getShowTime()));
+            ps.setInt(4, showtime.getScreenNumber());
+            ps.setInt(5, showtime.getTotalSeats());
+            ps.setBigDecimal(6, showtime.getPricePerSeat());
+            return ps;
+        }, keyHolder);
+
+        showtime.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
+        return showtime;
     }
 
     public void deleteById(Long id) {
