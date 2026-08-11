@@ -11,7 +11,7 @@ import {
   Clock,
   MonitorPlay,
   Armchair,
-  DollarSign,
+  Banknote,
 } from 'lucide-react'
 import api from '../utils/api'
 
@@ -163,10 +163,10 @@ function TicketPage() {
             </div>
             <div className="flex items-center justify-between text-sm pt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
               <span className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
-                <DollarSign className="w-4 h-4" /> Total Paid
+                <Banknote className="w-4 h-4" /> Total Paid
               </span>
               <span className="font-bold" style={{ color: 'var(--color-success)' }}>
-                ${parseFloat(ticket.totalAmount).toFixed(2)}
+                PKR {parseFloat(ticket.totalAmount).toFixed(2)}
               </span>
             </div>
           </div>
