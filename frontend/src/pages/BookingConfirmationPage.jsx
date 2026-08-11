@@ -221,7 +221,7 @@ function BookingConfirmationPage() {
             <div className="flex justify-between text-sm pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
               <span style={{ color: 'var(--color-text-muted)' }}>Total Paid</span>
               <span className="font-semibold" style={{ color: 'var(--color-success)' }}>
-                ${parseFloat(confirmed.totalAmount).toFixed(2)}
+                PKR {parseFloat(confirmed.totalAmount).toFixed(2)}
               </span>
             </div>
           </div>
@@ -332,7 +332,7 @@ function BookingConfirmationPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span style={{ color: 'var(--color-text-muted)' }}>Total</span>
-              <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>${total.toFixed(2)}</span>
+              <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>PKR {total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -461,13 +461,13 @@ function BookingConfirmationPage() {
               <span style={{ color: 'var(--color-text-muted)' }}>
                 Price per seat ({selectedSeats.length} {selectedSeats.length === 1 ? 'seat' : 'seats'})
               </span>
-              <span>${showtime ? parseFloat(showtime.pricePerSeat).toFixed(2) : '0.00'}</span>
+              <span>PKR {showtime ? parseFloat(showtime.pricePerSeat).toFixed(2) : '0.00'}</span>
             </div>
           </div>
 
           <div className="flex justify-between text-sm font-semibold pt-3 mt-3" style={{ borderTop: '1px solid var(--color-border)' }}>
             <span>Total</span>
-            <span style={{ color: 'var(--color-primary)' }}>${total.toFixed(2)}</span>
+            <span style={{ color: 'var(--color-primary)' }}>PKR {total.toFixed(2)}</span>
           </div>
         </div>
 
