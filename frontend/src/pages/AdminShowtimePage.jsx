@@ -70,7 +70,7 @@ function AdminShowtimePage() {
     setMessage('')
     try {
       if (editing) {
-        const res = await api.put(`/admin/showtimes/${editing.id}`, {
+        await api.put(`/admin/showtimes/${editing.id}`, {
           showDate,
           showTime,
           pricePerSeat: parseFloat(price)

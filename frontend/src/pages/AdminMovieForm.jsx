@@ -55,7 +55,7 @@ function AdminMovieForm() {
           setCast(movieCast)
           if (movie.posterUrl) setPosterPreview(movie.posterUrl)
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load data')
       } finally {
         setLoading(false)

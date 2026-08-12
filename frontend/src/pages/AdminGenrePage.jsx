@@ -25,7 +25,7 @@ function AdminGenrePage() {
     try {
       const response = await api.get('/genres')
       setGenres(response.data)
-    } catch (err) {
+    } catch {
       setError('Failed to load genres')
     } finally {
       setLoading(false)

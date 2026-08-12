@@ -123,9 +123,9 @@ function SeatSelectionPage() {
 
         <div className="space-y-2 mb-8">
           {rowLabels.map(row => (
-            <div key={row} className="flex items-center gap-3 justify-center">
+            <div key={row} className="flex items-center gap-2 sm:gap-3 justify-center">
               <span className="w-6 text-right text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>{row}</span>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1 sm:gap-1.5 overflow-x-auto">
                 {rows[row]
                   .sort((a, b) => parseInt(a.seatNumber) - parseInt(b.seatNumber))
                   .map(seat => {
@@ -139,7 +139,7 @@ function SeatSelectionPage() {
                         key={seat.id}
                         disabled={isBooked}
                         onClick={() => toggleSeat(seat.id, seat.status, seat.heldByMe)}
-                        className="w-8 h-8 rounded text-xs font-medium transition-all"
+                        className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded text-[10px] sm:text-xs font-medium transition-all"
                         style={{
                           backgroundColor: bg,
                           opacity: isBooked ? 0.4 : 1,
