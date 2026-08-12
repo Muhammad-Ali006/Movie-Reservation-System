@@ -84,7 +84,9 @@ npm run dev
 - **Stateless sessions** — no HTTP session, every request authenticated via Bearer token
 - **CORS** — configured to allow `http://localhost:5173` (Vite dev server)
 - **Role-based access control** — `ROLE_USER` for regular users, `ROLE_ADMIN` for admin endpoints (`/api/admin/**`)
+- **JSON 401/403 responses** — custom `authenticationEntryPoint`/`accessDeniedHandler` in `SecurityConfig` return `{"message":"Unauthorized"}` / `{"message":"Access denied"}` instead of Spring's HTML error page (W4 Mon)
 - **Password encryption** — BCrypt via Spring Security `PasswordEncoder`
+- **Signup validation** — `@Valid` on `SignupRequest` (username 3–50 chars, valid email, password ≥ 8 chars) with a `MethodArgumentNotValidException` handler returning 400 + the field message (W4 Mon)
 - **Data seeder** — auto-creates admin account on startup (`admin / admin123`), seeds 6 cinema screens (2 small, 2 medium, 2 large)
 - **Global exception handler** — returns structured JSON errors for 404, 401, 400, and 500
 
@@ -106,7 +108,8 @@ npm run dev
 - **Public endpoint** — `GET /api/screens` returns all screens with name, type, and seat count
 
 ### Showtimes & Seats
-- **Admin showtime creation** — `POST /api/admin/showtimes` accepts movieId, screenId, showDate, showTime, pricePerSeat
+- **Admin showtime creation** — `POST /api/admin/showtimes` accepts movieId, screenId, showDate, showTime, pricePerSeat; validates required fields, non-negative price, future show date, and rejects duplicate movie+screen+date+time combos (W4 Mon)
+- **Showtime update validation** — `PUT /api/admin/showtimes/{id}` also rejects past dates and negative prices (W4 Mon)
 - **Auto seat generation** — when a showtime is created, seats are automatically generated based on the screen's capacity (e.g. Screen 5 → 180 seats → 12 rows × 15)
 - **Public showtime listing** — `GET /api/showtimes?movieId={id}` returns all showtimes for a movie with screen name, available seat count, and price
 - **Seat layout endpoint** — `GET /api/showtimes/{showtimeId}/seats` returns all seats with `id`, `seatNumber`, `rowLabel`, `status` ("AVAILABLE" / "HELD" / "BOOKED"), and `heldByMe`; optional `?heldReservationId=` so a user's own held seats show as AVAILABLE (change-seats mode)
@@ -133,6 +136,8 @@ npm run dev
 - **Dark-themed forms** — global CSS styles for dark input fields, selects, and textareas via CSS variables
 - **Custom scrollbar** — styled for dark theme
 - **Responsive design** — mobile-friendly layouts across all pages using Tailwind responsive utilities (`sm:`, `md:`, `lg:`)
+- **PKR currency** — all price displays use **PKR** (movie detail showtime cards, booking totals, ticket amount, My Bookings, admin reservation amounts, admin showtime label + `/seat`); the ticket page uses a banknote icon instead of a dollar sign (W4 Tue)
+- **Mobile seat grid** — the user seat picker scales seat buttons down on phones (`w-6` → `w-8` on desktop) with an `overflow-x-auto` fallback so a 15-seat row never overflows a small screen (W4 Tue)
 
 ### Frontend
 - **Axios client** (`utils/api.js`) — centralized API client with `baseURL: /api`
@@ -306,7 +311,7 @@ Auto-seeded on startup:
 ### Movies
 | Method | Endpoint                   | Access         | Description            |
 |--------|----------------------------|----------------|------------------------|
-| GET    | /api/movies?genreId=&sortBy=&sortDir=&availability=&page=&size= | Public         | List movies with filtering, sorting, and pagination (returns `{ content, totalPages, totalElements, currentPage, size }`) |
+| GET    | /api/movies?genreId=&sortBy=&sortDir=&availability=&page=&size= | Public         | List movies with filtering, sorting, and pagination (returns `{ content, totalPages, totalElements, currentPage, size }`; `page` ≥ 0, `size` 1–100 validated → 400) |
 | GET    | /api/movies/{slug}         | Public         | Get movie details + cast by slug |
 | POST   | /api/admin/movies          | ADMIN          | Create movie (with genreIds) |
 | PUT    | /api/admin/movies/{id}     | ADMIN          | Update movie           |
@@ -441,3 +446,7 @@ The **W3 Thu pass** added: the **digital ticket backend** — `tickets` table (t
 The **W3 Fri pass** finished the digital ticket feature and closed Week 3: **non-consuming `GET /api/tickets/{ticketToken}/details`** (the scan endpoint marks USED on first call, so the buyer's own page must not use it), **`ticketToken` in `GET /api/reservations/my`**, the **printable QR ticket page** (`/tickets/:token` — Cinema Noir ticket card + client-side QR via `qrcode` + Print; VALID / ALREADY USED / INVALID states) with **View Ticket** buttons on the confirmation page and My Bookings, bug #17 (unknown `/api/**` → 404), and a **full live end-to-end test pass (39/39)** — book → hold → mock pay → ticket VALID→USED, change seats on PENDING + CONFIRMED, backdated-hold expiry, admin showtime/movie delete+update guards, bulk cancel, admin seat grid, genre CRUD, and error cases (400 malformed JSON / double-cancel / seat-taken, 404, INVALID). All E2E data cleaned — DB reset to baseline.
 
 Remaining Week 3 work: **only the payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**; revenue/capacity reports, admin dashboard charts, and the account page were deferred to Week 4. See the **Remaining Week 3 Features** section above.
+
+The **W4 Mon pass** (test all endpoints + fix edge cases) added backend hardening: **showtime validation** (missing `movieId`/`screenId`/`showDate`/`showTime`/`pricePerSeat` → 400, negative price → 400, past show date → 400, duplicate movie+screen+date+time → 400 — enforced on create and update), **signup bean validation** (`@Valid` + `MethodArgumentNotValidException` → 400 with field message), **movie pagination bounds** (`page ≥ 0`, `size 1–100` → 400), and **JSON 401/403 responses** (`authenticationEntryPoint` / `accessDeniedHandler` in `SecurityConfig` return `{"message":"Unauthorized"}` / `{"message":"Access denied"}` instead of Spring's HTML error page). Full live test pass: **48/48 PASS** (39-regression suite + 9 new edge-case checks: missing/negative/past/duplicate showtime fields, update guards, pagination bounds, 401/403 JSON, non-admin 403).
+
+The **W4 Tue pass** (test all frontend flows + mobile fixes) reviewed every page for mobile responsiveness, fixed the **seat grid overflow** on phones (15 seats/row previously fixed at 32px ≈ 570px → now responsive `w-6→w-8` scaling + `overflow-x-auto` fallback; the admin grid already wrapped), cleaned 3 unused-variable lint warnings (`AdminMovieForm`, `AdminGenrePage`, `AdminShowtimePage`), and **changed all currency displays from `$` to `PKR`** (movie detail, booking confirmation ×4, ticket page + dollar icon → banknote, My Bookings, admin reservations ×2, admin showtime label + `/seat`). Verified via `vite build` + `oxlint` (1 intentional warning) + Vite proxy `/api` and `/uploads` passthrough.
