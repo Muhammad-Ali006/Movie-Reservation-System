@@ -254,7 +254,7 @@ function AdminShowtimePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Price per Seat ($)</label>
+          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Price per Seat (PKR)</label>
           <input
             type="number"
             step="0.50"
@@ -340,7 +340,7 @@ function AdminShowtimePage() {
                     </span>
                   </div>
                   <p className="text-xs mt-1" style={{ color: 'var(--color-text-secondary)' }}>
-                    {formatDate(st.showDate)} · {formatTime(st.showTime)} · ${parseFloat(st.pricePerSeat).toFixed(2)}/seat
+                    {formatDate(st.showDate)} · {formatTime(st.showTime)} · PKR {parseFloat(st.pricePerSeat).toFixed(2)}/seat
                   </p>
                   <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
                     {st.availableSeats} of {st.totalSeats} seats available
