@@ -14,6 +14,7 @@ import MovieDetailPage from './pages/MovieDetailPage'
 import SeatSelectionPage from './pages/SeatSelectionPage'
 import BookingConfirmationPage from './pages/BookingConfirmationPage'
 import UserReservationsPage from './pages/UserReservationsPage'
+import AccountPage from './pages/AccountPage'
 import AdminShowtimePage from './pages/AdminShowtimePage'
 import AdminReservationPage from './pages/AdminReservationPage'
 import TicketPage from './pages/TicketPage'
@@ -66,6 +67,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserReservationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <AccountPage />
               </ProtectedRoute>
             }
           />
