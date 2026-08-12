@@ -1,3 +1,68 @@
+# Session Summary — Tue Aug 12, 2026 (Week 4, Day 2 — frontend flows + mobile-friendly fixes)
+
+## What Was Completed
+
+### Frontend flows tested + mobile-friendly fixes
+- **Responsive seat grid** — the user seat picker previously fixed seat buttons at 32px ≈ 570px, so a 15-seat row overflowed small screens. Now `w-6` on phones scaling to `w-8` on desktop with an `overflow-x-auto` fallback (the admin grid already wrapped).
+- **Lint cleanup** — removed 3 unused-variable warnings (`AdminMovieForm`, `AdminGenrePage`, `AdminShowtimePage`).
+- **PKR currency everywhere** — changed every `$` display to **PKR** (movie detail showtime cards, booking confirmation totals, ticket amount + dollar icon → banknote, My Bookings, admin reservation amounts, admin showtime label + `/seat`).
+- Reviewed every page for mobile responsiveness.
+
+## Verification
+- `npm run build` ✅ · `npm run lint` ✅ (1 intentional warning) · Vite proxy `/api` + `/uploads` passthrough ✅
+
+## Current State
+- W4 Tue work complete and verified. Code committed (`bfab7ad` … `69b18a3` — the PKR series + mobile-responsive seat grid commits).
+- README.md updated (uncommitted, the only tracked doc). SCHEDULE.md / BUGS.md / SESSION-SUMMARY.md / handoff are local-only.
+
+### Uncommitted Changes
+- `README.md` — W4 status + PKR docs (commit + push per usual habit)
+
+## Tomorrow's Plan — Wed Aug 13 (Week 4, Day 3)
+- Per SCHEDULE: final polish + error scenarios; carried-over if time: revenue/capacity reports (`GET /api/admin/reports/revenue` / `/capacity`), AdminDashboard charts, account page (`GET /api/auth/me`).
+
+## Critical Notes
+- Start backend: `./mvnw.cmd spring-boot:run`
+- Start frontend: `cd frontend && npm run dev`
+- Admin login: username `admin`, password `admin123`
+- DB: `movie_db`, localhost:5432, user `postgres`, password `root`
+- **Postgres quirk:** always quote camelCase aliases in SQL (`AS "showtimeId"`).
+- **Ticket QR rule:** `GET /api/tickets/{token}` CONSUMES the ticket (marks USED) — use `/details` for display-only.
+
+---
+
+# Session Summary — Mon Aug 11, 2026 (Week 4, Day 1 — test all endpoints + fix edge cases)
+
+## What Was Completed
+
+### Backend hardening (W4 Mon edge-case pass)
+- **Showtime validation** — `POST /api/admin/showtimes` and `PUT /api/admin/showtimes/{id}` now reject missing `movieId`/`screenId`/`showDate`/`showTime`/`pricePerSeat` (400), negative price (400), past show date (400), and duplicate movie+screen+date+time combos (400).
+- **Signup bean validation** — `@Valid` on `SignupRequest` (username 3–50 chars, valid email, password ≥ 8 chars) with a `MethodArgumentNotValidException` handler returning 400 + the field message.
+- **Movie pagination bounds** — `page ≥ 0`, `size 1–100` validated → 400.
+- **JSON 401/403 responses** — `authenticationEntryPoint`/`accessDeniedHandler` in `SecurityConfig` return `{"message":"Unauthorized"}` / `{"message":"Access denied"}` instead of Spring's HTML error page.
+
+## Verification
+- `./mvnw.cmd compile -q` ✅
+- **Full live test pass: 48/48 PASS** — 39-regression suite + 9 new edge-case checks (missing/negative/past/duplicate showtime fields, update guards, pagination bounds, 401/403 JSON, non-admin 403).
+
+## Current State
+- W4 Mon work complete and verified. Code committed (`c7876d7` … `fb8d77b` — showtime validation + duplicate-showtime check + signup validation + pagination bounds + JSON 401/403).
+
+### Uncommitted Changes
+- Docs only (README.md + local-only schedule/bugs/summary/handoff)
+
+## Tomorrow's Plan — Tue Aug 12 (Week 4, Day 2)
+- Per SCHEDULE: test all frontend flows + mobile-friendly fixes.
+
+## Critical Notes
+- Start backend: `./mvnw.cmd spring-boot:run`
+- Start frontend: `cd frontend && npm run dev`
+- Admin login: username `admin`, password `admin123`
+- DB: `movie_db`, localhost:5432, user `postgres`, password `root`
+- **Postgres quirk:** always quote camelCase aliases in SQL (`AS "showtimeId"`).
+
+---
+
 # Session Summary — Fri Aug 7, 2026 (Week 3, Day 5 — printable ticket QR page + E2E test pass)
 
 ## What Was Completed
