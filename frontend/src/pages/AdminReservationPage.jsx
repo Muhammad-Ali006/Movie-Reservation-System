@@ -127,7 +127,7 @@ function AdminReservationPage() {
     if (seat.status === 'AVAILABLE' || !seat.reservationId) return
     const label = `${seat.rowLabel}${seat.seatNumber}`
     const owner = seat.username || 'Unknown user'
-    const amount = seat.totalAmount != null ? `, $${parseFloat(seat.totalAmount).toFixed(2)}` : ''
+    const amount = seat.totalAmount != null ? `, PKR ${parseFloat(seat.totalAmount).toFixed(2)}` : ''
     if (!window.confirm(`Cancel ${owner}'s booking for seat ${label}${amount}?`)) return
     setCancellingId(seat.reservationId)
     try {
@@ -487,7 +487,7 @@ function AdminReservationPage() {
                 </div>
                 <div>
                   <span style={{ color: 'var(--color-text-muted)' }}>Amount</span>
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>${parseFloat(r.totalAmount).toFixed(2)}</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>PKR {parseFloat(r.totalAmount).toFixed(2)}</p>
                 </div>
               </div>
 
