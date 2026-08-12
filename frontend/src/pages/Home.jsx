@@ -20,15 +20,10 @@ function Home() {
     }}>
       <div className="max-w-7xl mx-auto px-6 pt-20">
         {/* Title */}
-        <h1 className="text-5xl md:text-7xl font-black mb-4 leading-tight" style={{ color: 'var(--color-text)' }}>
+        <h1 className="text-5xl md:text-7xl font-black mb-8 leading-tight" style={{ color: 'var(--color-text)' }}>
           Movie
           <span className="block" style={{ color: 'var(--color-primary)' }}>Reservation</span>
         </h1>
-
-        {/* Subtitle */}
-        <p className="text-lg md:text-xl mb-8 max-w-lg" style={{ color: 'var(--color-text-secondary)' }}>
-          Browse movies, view showtimes, and reserve your seats for the ultimate cinema experience.
-        </p>
 
         {/* CTA Buttons */}
         {!token && (
@@ -49,7 +44,7 @@ function Home() {
               onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
               onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}>
               <UserPlus className="w-5 h-5" />
-              Sign Up Free
+              Sign Up
             </Link>
           </div>
         )}
