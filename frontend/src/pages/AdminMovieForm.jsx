@@ -171,7 +171,7 @@ function AdminMovieForm() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 pt-20">
       <div className="mb-6">
-        <Link to="/admin/movies" className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--color-primary)' }}>
+        <Link to="/admin/movies" className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--color-accent)' }}>
           <ArrowLeft className="w-4 h-4" /> Back to Movies
         </Link>
         <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text)' }}>
@@ -300,7 +300,7 @@ function AdminMovieForm() {
                       <img src={c.photoUrl} alt={c.actorName} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
                     ) : (
                       <div className="h-10 w-10 rounded-full flex items-center justify-center text-xs flex-shrink-0"
-                        style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)' }}>
+                        style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}>
                         {c.actorName?.charAt(0)}
                       </div>
                     )}
@@ -310,7 +310,9 @@ function AdminMovieForm() {
                       <span style={{ color: 'var(--color-text-secondary)' }}>{c.roleName}</span>
                     </span>
                   </div>
-                  <button onClick={() => handleRemoveCast(c.id)} className="text-sm hover:underline" style={{ color: 'var(--color-error)' }}>Remove</button>
+                  <button onClick={() => handleRemoveCast(c.id)} className="text-sm hover:underline" style={{ color: 'var(--color-text-secondary)' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}>Remove</button>
                 </div>
               ))}
             </div>
