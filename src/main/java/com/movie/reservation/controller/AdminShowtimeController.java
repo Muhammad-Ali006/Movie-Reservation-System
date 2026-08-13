@@ -87,25 +87,7 @@ public class AdminShowtimeController {
 
         Showtime saved = showtimeRepository.save(showtime);
 
-        int totalSeats = screen.getTotalSeats();
-        int seatsPerRow = screen.getSeatsPerRow();
-        int totalRows = totalSeats / seatsPerRow;
-
-        List<Seat> seats = new ArrayList<>();
-        for (int row = 0; row < totalRows; row++) {
-            char rowLabel = (char) ('A' + row);
-            int seatsInThisRow = (row == totalRows - 1) ? totalSeats - (row * seatsPerRow) : seatsPerRow;
-            for (int s = 1; s <= seatsInThisRow; s++) {
-                Seat seat = new Seat();
-                seat.setShowtimeId(saved.getId());
-                seat.setRowLabel(String.valueOf(rowLabel));
-                seat.setSeatNumber(String.valueOf(s));
-                seat.setAvailable(true);
-                seats.add(seat);
-            }
-        }
-
-        seatRepository.saveAll(seats);
+        generateSeatsForShowtime(saved.getId(), screen);
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", saved.getId());
@@ -116,7 +98,7 @@ public class AdminShowtimeController {
         response.put("screenType", screen.getScreenType());
         response.put("totalSeats", saved.getTotalSeats());
         response.put("pricePerSeat", saved.getPricePerSeat());
-        response.put("seatsGenerated", seats.size());
+        response.put("seatsGenerated", saved.getTotalSeats());
 
         return ResponseEntity.ok(response);
     }
@@ -159,10 +141,11 @@ public class AdminShowtimeController {
     }
 
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<Map<String, Object>> updateShowtime(
             @PathVariable Long id,
             @RequestBody ShowtimeRequest request) {
-        showtimeRepository.findById(id)
+        Showtime existing = showtimeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Showtime not found"));
 
         if (request.getShowDate() == null || request.getShowTime() == null || request.getPricePerSeat() == null) {
@@ -182,10 +165,41 @@ public class AdminShowtimeController {
             );
         }
 
-        showtimeRepository.updateDateTimePrice(id, request.getShowDate(), request.getShowTime(), request.getPricePerSeat());
+        Long movieId = request.getMovieId() != null ? request.getMovieId() : existing.getMovieId();
+        int screenNumber = request.getScreenId() != null ? request.getScreenId().intValue() : existing.getScreenNumber();
+        boolean movieOrScreenChanged =
+                (request.getMovieId() != null && !request.getMovieId().equals(existing.getMovieId()))
+                || (request.getScreenId() != null && request.getScreenId().intValue() != existing.getScreenNumber());
+
+        if (movieOrScreenChanged) {
+            if (!movieRepository.existsById(movieId)) {
+                throw new ResourceNotFoundException("Movie not found");
+            }
+            Screen screen = screenRepository.findById((long) screenNumber)
+                    .orElseThrow(() -> new ResourceNotFoundException("Screen not found"));
+
+            Integer duplicate = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM showtimes WHERE movie_id = ? AND screen_number = ? AND show_date = ? AND show_time = ? AND id <> ?",
+                Integer.class, movieId, screenNumber, request.getShowDate(), request.getShowTime(), id);
+            if (duplicate != null && duplicate > 0) {
+                throw new IllegalArgumentException("A showtime for this movie already exists on this screen at this date and time");
+            }
+
+            jdbcTemplate.update("DELETE FROM reservation_seats WHERE seat_id IN (SELECT id FROM seats WHERE showtime_id = ?)", id);
+            jdbcTemplate.update("DELETE FROM seats WHERE showtime_id = ?", id);
+            generateSeatsForShowtime(id, screen);
+
+            jdbcTemplate.update(
+                "UPDATE showtimes SET movie_id = ?, screen_number = ?, total_seats = ?, show_date = ?, show_time = ?, price_per_seat = ? WHERE id = ?",
+                movieId, screenNumber, screen.getTotalSeats(), request.getShowDate(), request.getShowTime(), request.getPricePerSeat(), id);
+        } else {
+            showtimeRepository.updateDateTimePrice(id, request.getShowDate(), request.getShowTime(), request.getPricePerSeat());
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", id);
+        response.put("movieId", movieId);
+        response.put("screenNumber", screenNumber);
         response.put("showDate", request.getShowDate());
         response.put("showTime", request.getShowTime());
         response.put("pricePerSeat", request.getPricePerSeat());
@@ -266,5 +280,27 @@ public class AdminShowtimeController {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Showtime deleted successfully");
         return ResponseEntity.ok(response);
+    }
+
+    private void generateSeatsForShowtime(Long showtimeId, Screen screen) {
+        int totalSeats = screen.getTotalSeats();
+        int seatsPerRow = screen.getSeatsPerRow();
+        int totalRows = totalSeats / seatsPerRow;
+
+        List<Seat> seats = new ArrayList<>();
+        for (int row = 0; row < totalRows; row++) {
+            char rowLabel = (char) ('A' + row);
+            int seatsInThisRow = (row == totalRows - 1) ? totalSeats - (row * seatsPerRow) : seatsPerRow;
+            for (int s = 1; s <= seatsInThisRow; s++) {
+                Seat seat = new Seat();
+                seat.setShowtimeId(showtimeId);
+                seat.setRowLabel(String.valueOf(rowLabel));
+                seat.setSeatNumber(String.valueOf(s));
+                seat.setAvailable(true);
+                seats.add(seat);
+            }
+        }
+
+        seatRepository.saveAll(seats);
     }
 }
