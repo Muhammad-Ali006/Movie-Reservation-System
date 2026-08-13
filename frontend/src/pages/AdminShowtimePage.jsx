@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { CalendarClock, Loader2, CheckCircle, AlertCircle, Pencil, Trash2, Monitor, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { CalendarClock, Loader2, CheckCircle, AlertCircle, Pencil, Trash2, Monitor, X, ArrowLeft } from 'lucide-react'
 import api from '../utils/api'
 
 function AdminShowtimePage() {
@@ -34,7 +35,7 @@ function AdminShowtimePage() {
 
   useEffect(() => {
     Promise.all([
-      api.get('/movies?page=0&size=200'),
+      api.get('/movies?page=0&size=100'),
       api.get('/screens'),
       api.get('/admin/showtimes')
     ]).then(([moviesRes, screensRes, showtimesRes]) => {
@@ -71,6 +72,8 @@ function AdminShowtimePage() {
     try {
       if (editing) {
         await api.put(`/admin/showtimes/${editing.id}`, {
+          movieId: parseInt(movieId),
+          screenId: parseInt(screenId),
           showDate,
           showTime,
           pricePerSeat: parseFloat(price)
@@ -150,6 +153,9 @@ function AdminShowtimePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 pt-20">
+      <Link to="/admin" className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--color-accent)' }}>
+        <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+      </Link>
       <div className="flex items-center gap-3 mb-8">
         <CalendarClock className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
         <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Manage Showtimes</h1>
@@ -171,7 +177,7 @@ function AdminShowtimePage() {
 
       {editing && (
         <div className="flex items-center justify-between p-3 rounded text-sm mb-4" style={{ backgroundColor: 'rgba(255, 193, 7, 0.12)', color: 'var(--color-warning)' }}>
-          <span>Editing showtime #{editing.id} — {editing.movieTitle} ({formatDate(editing.showDate)} {formatTime(editing.showTime)}). Movie and screen cannot be changed.</span>
+          <span>Editing showtime #{editing.id} — {editing.movieTitle} ({formatDate(editing.showDate)} {formatTime(editing.showTime)}). Changing the screen regenerates the seat layout.</span>
           <button onClick={resetForm} className="flex items-center gap-1 font-semibold hover:underline" style={{ color: 'var(--color-warning)' }}>
             <X className="w-4 h-4" /> Cancel
           </button>
@@ -189,13 +195,12 @@ function AdminShowtimePage() {
             value={movieId}
             onChange={e => setMovieId(e.target.value)}
             required
-            disabled={!!editing}
             className="w-full px-3 py-2.5 rounded-lg text-sm"
             style={{
-              backgroundColor: editing ? 'var(--color-border)' : 'var(--color-bg)',
+              backgroundColor: 'var(--color-bg)',
               color: 'var(--color-text)',
               border: '1px solid var(--color-border)',
-              cursor: editing ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
             }}
           >
             <option value="">Select a movie</option>
@@ -211,13 +216,12 @@ function AdminShowtimePage() {
             value={screenId}
             onChange={e => setScreenId(e.target.value)}
             required
-            disabled={!!editing}
             className="w-full px-3 py-2.5 rounded-lg text-sm"
             style={{
-              backgroundColor: editing ? 'var(--color-border)' : 'var(--color-bg)',
+              backgroundColor: 'var(--color-bg)',
               color: 'var(--color-text)',
               border: '1px solid var(--color-border)',
-              cursor: editing ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
             }}
           >
             <option value="">Select a screen</option>
@@ -364,10 +368,12 @@ function AdminShowtimePage() {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all"
                     style={{
                       backgroundColor: locked ? 'var(--color-border)' : 'var(--color-surface)',
-                      color: locked ? 'var(--color-text-muted)' : 'var(--color-primary)',
+                      color: locked ? 'var(--color-text-muted)' : 'var(--color-text)',
                       border: '1px solid var(--color-border)',
                       cursor: locked ? 'not-allowed' : 'pointer',
                     }}
+                    onMouseEnter={e => { if (!locked) e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)' }}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = locked ? 'var(--color-border)' : 'var(--color-surface)'}
                   >
                     <Pencil className="w-3.5 h-3.5" /> Edit
                   </button>
@@ -377,10 +383,12 @@ function AdminShowtimePage() {
                     disabled={locked || deletingId === st.id}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all"
                     style={{
-                      backgroundColor: locked ? 'var(--color-border)' : 'var(--color-error-light)',
-                      color: locked ? 'var(--color-text-muted)' : 'var(--color-error)',
+                      backgroundColor: locked ? 'var(--color-border)' : 'var(--color-surface)',
+                      color: locked ? 'var(--color-text-muted)' : 'var(--color-text)',
                       cursor: locked || deletingId === st.id ? 'not-allowed' : 'pointer',
                     }}
+                    onMouseEnter={e => { if (!locked) e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)' }}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = locked ? 'var(--color-border)' : 'var(--color-surface)'}
                   >
                     {deletingId === st.id ? (
                       <><Loader2 className="w-3 h-3 animate-spin" /> Deleting</>
