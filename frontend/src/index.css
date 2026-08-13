@@ -137,6 +137,22 @@ input::placeholder, textarea::placeholder {
   z-index: 2;
 }
 
+/* Blinking typewriter cursor */
+.typing-cursor {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  margin-left: 4px;
+  background: var(--color-text);
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* ===================================================
    MOVIE CARD HOVER EFFECTS
    =================================================== */
@@ -148,4 +164,103 @@ input::placeholder, textarea::placeholder {
   transform: scale(1.05);
   z-index: 10;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* ===================================================
+   INFINITE MARQUEE ROWS
+   =================================================== */
+.marquee {
+  position: relative;
+  overflow: hidden;
+}
+
+.marquee::before,
+.marquee::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.marquee::before {
+  left: 0;
+  background: linear-gradient(to right, var(--color-bg) 10%, rgba(10,10,10,0.6) 60%, transparent 100%);
+}
+
+.marquee::after {
+  right: 0;
+  background: linear-gradient(to left, var(--color-bg) 10%, rgba(10,10,10,0.6) 60%, transparent 100%);
+}
+
+.marquee-track {
+  display: flex;
+  gap: 1.5rem;
+  width: max-content;
+  padding: 1rem 0;
+  animation: marquee-scroll 40s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-25%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* Smooth fade-in when a marquee row appears */
+.marquee-section {
+  animation: fade-in 0.6s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================================================
+   SMOOTH BUTTON/LINK TRANSITIONS + PRESS EFFECT
+   =================================================== */
+button, a {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+}
+
+button:active, a:active {
+  transform: scale(0.97);
+}
+
+/* ===================================================
+   PAGE ENTER TRANSITION
+   =================================================== */
+.page-transition {
+  animation: page-enter 0.35s ease;
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button, a {
+    transition: none;
+  }
+
+  button:active, a:active {
+    transform: none;
+  }
+
+  .page-transition {
+    animation: none;
+  }
 }
