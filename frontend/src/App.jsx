@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Lenis from 'lenis'
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -24,6 +25,7 @@ import AdminRoute from './components/AdminRoute'
 
 function App() {
   const token = localStorage.getItem('token')
+  const location = useLocation()
 
   useEffect(() => {
     const lenis = new Lenis({ autoRaf: true })
@@ -31,10 +33,11 @@ function App() {
   }, [])
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
       <Navbar />
-      <main style={{ color: 'var(--color-text)' }}>
-        <Routes>
+      <main className="flex-1" style={{ color: 'var(--color-text)' }}>
+        <div key={location.pathname} className="page-transition">
+          <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/movies" element={<MovieListingPage />} />
           <Route path="/movies/:slug" element={<MovieDetailPage />} />
@@ -145,7 +148,9 @@ function App() {
           <Route path="/tickets/:token" element={<TicketPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </div>
       </main>
+      <Footer />
     </div>
   )
 }
