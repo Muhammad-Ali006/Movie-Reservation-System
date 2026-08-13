@@ -92,7 +92,7 @@ function AdminGenrePage() {
     <div className="max-w-4xl mx-auto px-6 py-8 pt-20">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <Link to="/admin" className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--color-primary)' }}>
+          <Link to="/admin" className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--color-accent)' }}>
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Link>
           <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: 'var(--color-text)' }}>Manage Genres</h1>
@@ -179,14 +179,20 @@ function AdminGenrePage() {
                   <td className="px-6 py-4 text-sm font-medium" style={{ color: 'var(--color-text)' }}>{genre.name}</td>
                   <td className="px-6 py-4 text-sm" style={{ color: 'var(--color-text-secondary)' }}>{genre.description || '—'}</td>
                   <td className="px-6 py-4 text-right text-sm space-x-2">
-                    <button onClick={() => openEditForm(genre)} style={{ color: 'var(--color-primary)' }} className="hover:underline">Edit</button>
+                    <button onClick={() => openEditForm(genre)} style={{ color: 'var(--color-text-secondary)' }} className="hover:underline"
+                      onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}>Edit</button>
                     {deletingId === genre.id ? (
                       <span className="inline-flex items-center gap-1">
-                        <button onClick={() => handleDelete(genre.id)} className="font-medium hover:underline" style={{ color: 'var(--color-error)' }}>Confirm</button>
+                        <button onClick={() => handleDelete(genre.id)} className="font-medium hover:underline" style={{ color: 'var(--color-text-secondary)' }}
+                          onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text)'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}>Confirm</button>
                         <button onClick={() => setDeletingId(null)} className="hover:underline" style={{ color: 'var(--color-text-muted)' }}>Cancel</button>
                       </span>
                     ) : (
-                      <button onClick={() => setDeletingId(genre.id)} className="hover:underline" style={{ color: 'var(--color-error)' }}>Delete</button>
+                      <button onClick={() => setDeletingId(genre.id)} className="hover:underline" style={{ color: 'var(--color-text-secondary)' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-secondary)'}>Delete</button>
                     )}
                   </td>
                 </tr>
