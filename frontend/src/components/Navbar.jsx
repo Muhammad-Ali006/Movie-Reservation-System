@@ -30,13 +30,15 @@ function Navbar() {
     }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" onClick={closeMobile} className="flex items-center gap-2 text-xl font-black tracking-tight" style={{ color: 'var(--color-primary)' }}>
-            <Film className="w-6 h-6 sm:w-7 sm:h-7" />
-            CINEMAX
-          </Link>
+          {!isHome && (
+            <Link to="/" onClick={closeMobile} className="flex items-center gap-2 text-xl font-black tracking-tight" style={{ color: 'var(--color-primary)' }}>
+              <Film className="w-6 h-6 sm:w-7 sm:h-7" />
+              CINEMAX
+            </Link>
+          )}
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-5">
+          <div className="hidden md:flex items-center gap-5 ml-auto">
             {!isHome && (
               <Link to="/movies" className="flex items-center gap-1 text-sm font-medium transition-colors"
                 style={{ color: 'var(--color-text-secondary)' }}
