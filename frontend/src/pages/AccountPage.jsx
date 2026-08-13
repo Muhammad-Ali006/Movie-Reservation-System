@@ -62,7 +62,7 @@ function AccountPage() {
         <div className="flex items-center gap-4 mb-6">
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold"
-            style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}
+            style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
           >
             {(profile?.username || 'U').charAt(0).toUpperCase()}
           </div>
@@ -97,7 +97,9 @@ function AccountPage() {
         <button
           onClick={handleLogout}
           className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all"
-          style={{ backgroundColor: 'transparent', color: 'var(--color-error)', border: '1px solid var(--color-error)' }}
+          style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--color-surface)'}
         >
           <LogOut className="w-4 h-4" /> Logout
         </button>
