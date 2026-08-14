@@ -174,7 +174,7 @@ function UserReservationsPage() {
                         <span
                           key={i}
                           className="px-3 py-1 rounded text-xs font-semibold"
-                          style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}
+                          style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}
                         >
                           {seat}
                         </span>
@@ -213,9 +213,9 @@ function UserReservationsPage() {
                       disabled={busyId === res.id}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                       style={{
-                        backgroundColor: 'transparent',
-                        color: 'var(--color-error)',
-                        border: '1px solid var(--color-error)',
+                        backgroundColor: 'var(--color-surface)',
+                        color: 'var(--color-text)',
+                        border: '1px solid var(--color-border)',
                         opacity: busyId === res.id ? 0.5 : 1,
                         cursor: busyId === res.id ? 'not-allowed' : 'pointer',
                       }}
