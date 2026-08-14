@@ -182,7 +182,7 @@ function MovieListingPage() {
                     <span
                       key={index}
                       className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}>
+                      style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
                       {genreMap[gid] || 'Unknown'}
                     </span>
                   ))}
