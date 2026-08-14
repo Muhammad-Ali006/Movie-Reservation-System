@@ -7,11 +7,11 @@ function NotFoundPage({ title = 'Page Not Found', message = "The page you're loo
       <div className="text-center max-w-md">
         <div
           className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6"
-          style={{ backgroundColor: 'var(--color-primary-light)' }}
+          style={{ backgroundColor: 'var(--color-accent-light)' }}
         >
-          <SearchX className="w-10 h-10" style={{ color: 'var(--color-primary)' }} />
+          <SearchX className="w-10 h-10" style={{ color: 'var(--color-accent)' }} />
         </div>
-        <p className="text-sm font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--color-primary)' }}>
+        <p className="text-sm font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--color-accent)' }}>
           404
         </p>
         <h1 className="text-3xl font-semibold mb-3">{title}</h1>
