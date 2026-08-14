@@ -118,7 +118,7 @@ function MovieDetailPage() {
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
               {movieGenres.map((genreName, index) => (
-                <span key={index} className="text-sm px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}>
+                <span key={index} className="text-sm px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
                   {genreName}
                 </span>
               ))}
@@ -168,8 +168,8 @@ function MovieDetailPage() {
                   {member.photoUrl ? (
                     <img src={member.photoUrl} alt={member.actorName} className="w-20 h-20 rounded-full object-cover mx-auto mb-2" />
                   ) : (
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: 'var(--color-bg)' }}>
-                      <span className="text-xl" style={{ color: 'var(--color-primary)' }}>{member.actorName?.charAt(0)}</span>
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-2" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                      <span className="text-xl" style={{ color: 'var(--color-text)' }}>{member.actorName?.charAt(0)}</span>
                     </div>
                   )}
                   <p className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{member.actorName}</p>
@@ -226,7 +226,7 @@ function MovieDetailPage() {
                       <div className="flex items-center gap-2">
                         <Monitor className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
                         <span>{showtime.screenName}</span>
-                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}>
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
                           {showtime.screenType}
                         </span>
                       </div>
