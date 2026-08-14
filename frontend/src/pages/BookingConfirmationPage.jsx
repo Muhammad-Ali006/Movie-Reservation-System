@@ -449,7 +449,7 @@ function BookingConfirmationPage() {
                 <span
                   key={seat.id}
                   className="px-3 py-1 rounded text-xs font-semibold"
-                  style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)' }}
+                  style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}
                 >
                   {seat.rowLabel}{seat.seatNumber}
                 </span>
