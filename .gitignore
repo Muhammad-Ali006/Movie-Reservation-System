@@ -40,9 +40,7 @@ build/
 
 # Node modules
 node_modules/
-
-# Config files with credentials
-application.properties
+frontend/node/
 
 uploads
 frontend/public
