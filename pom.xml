@@ -65,6 +65,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>movie-reservation</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
