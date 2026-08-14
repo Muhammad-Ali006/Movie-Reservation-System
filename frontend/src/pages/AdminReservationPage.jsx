@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { CalendarX2, Loader2, AlertCircle, CheckCircle, Monitor, XCircle, LayoutGrid } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { CalendarX2, Loader2, AlertCircle, CheckCircle, Monitor, XCircle, LayoutGrid, ArrowLeft } from 'lucide-react'
 import api from '../utils/api'
 
 function AdminReservationPage() {
@@ -195,6 +196,9 @@ function AdminReservationPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 pt-20">
+      <Link to="/admin" className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--color-accent)' }}>
+        <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+      </Link>
       <div className="flex items-center gap-3 mb-6">
         <CalendarX2 className="w-6 h-6" style={{ color: 'var(--color-primary)' }} />
         <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Bookings</h1>
@@ -226,8 +230,9 @@ function AdminReservationPage() {
             disabled={cancellingAll}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
             style={{
-              backgroundColor: cancellingAll ? 'var(--color-border)' : 'var(--color-error-light)',
-              color: cancellingAll ? 'var(--color-text-muted)' : 'var(--color-error)',
+              backgroundColor: cancellingAll ? 'var(--color-border)' : 'var(--color-surface)',
+              color: cancellingAll ? 'var(--color-text-muted)' : 'var(--color-text)',
+              border: '1px solid var(--color-border)',
               cursor: cancellingAll ? 'not-allowed' : 'pointer',
             }}
           >
@@ -497,8 +502,9 @@ function AdminReservationPage() {
                   disabled={cancellingId === r.id}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold transition-all"
                   style={{
-                    backgroundColor: cancellingId === r.id ? 'var(--color-border)' : 'var(--color-error-light)',
-                    color: cancellingId === r.id ? 'var(--color-text-muted)' : 'var(--color-error)',
+                    backgroundColor: cancellingId === r.id ? 'var(--color-border)' : 'var(--color-surface)',
+                    color: cancellingId === r.id ? 'var(--color-text-muted)' : 'var(--color-text)',
+                    border: '1px solid var(--color-border)',
                     cursor: cancellingId === r.id ? 'not-allowed' : 'pointer',
                   }}
                 >
