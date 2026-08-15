@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link, Navigate } from 'react-router-dom'
-import { UserPlus, AlertCircle } from 'lucide-react'
+import { UserPlus, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import api from '../utils/api'
 
 function Signup() {
@@ -12,6 +12,7 @@ function Signup() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const token = localStorage.getItem('token')
   if (token) {
@@ -87,16 +88,28 @@ function Signup() {
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-text-secondary)' }}>
               Password
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full rounded-lg px-4 py-2"
-              style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
-              placeholder="Choose a password"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full rounded-lg pl-4 pr-10 py-2"
+                style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}
+                placeholder="Choose a password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(s => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                style={{ color: 'var(--color-text-muted)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-accent)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-text-muted)' }}>
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <button
