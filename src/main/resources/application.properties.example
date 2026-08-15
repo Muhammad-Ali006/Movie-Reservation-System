@@ -1,9 +1,9 @@
 spring.application.name=movie-reservation
 
-# Database
-spring.datasource.url=jdbc:postgresql://localhost:5432/movie_db
-spring.datasource.username=YOUR_USERNAME
-spring.datasource.password=YOUR_PASSWORD
+# Database (env vars with local defaults; override on the server)
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/movie_db}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:YOUR_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:YOUR_PASSWORD}
 spring.datasource.driver-class-name=org.postgresql.Driver
 
 # JDBC
@@ -14,8 +14,11 @@ spring.sql.init.mode=always
 spring.sql.init.schema-locations=classpath:schema.sql
 
 # JWT
-jwt.secret=YOUR_JWT_SECRET_HERE_MIN_32_CHARS
+jwt.secret=${JWT_SECRET:YOUR_JWT_SECRET_HERE_MIN_32_CHARS}
 jwt.expiration=86400000
+
+# Uploads directory (relative to the working directory; override on the server)
+app.upload.dir=${APP_UPLOAD_DIR:file:uploads/}
 
 # Server
 server.port=8080

@@ -26,8 +26,10 @@ A fullstack movie reservation platform built with Spring Boot 4.0.7, React 19, J
 | Tailwind CSS      | 4.3.3       |
 | React Router      | 7.18.1      |
 | Axios             | 1.18.1      |
-| Lenis             | —           |
-| Lucide React      | —           |
+| Lenis             | 1.3.25      |
+| Lucide React      | 1.27.0      |
+| Recharts          | 3.10.1      |
+| qrcode            | 1.5.4       |
 
 ---
 
@@ -77,6 +79,43 @@ npm run dev
 
 ---
 
+## Deployment (Render + Neon)
+
+The app is production-ready via environment variables — local defaults keep `npm run dev` / `mvnw spring-boot:run` unchanged, and the server overrides them at runtime.
+
+### Environment variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/movie_db` | JDBC connection string |
+| `SPRING_DATASOURCE_USERNAME` | `postgres` | DB user |
+| `SPRING_DATASOURCE_PASSWORD` | `root` | DB password |
+| `JWT_SECRET` | dev key | HS256 signing key (≥ 32 chars; set a long random value in production) |
+| `APP_UPLOAD_DIR` | `file:uploads/` | Filesystem path for poster/actor uploads (relative to the working dir) |
+
+> `spring.sql.init.mode=always` + `schema.sql` (all `IF NOT EXISTS`) auto-creates the schema on first boot; `DataSeeder` idempotently seeds the admin account (`admin / admin123`) and 6 screens.
+
+### Architecture
+
+A **single service** hosts both the backend and the built frontend:
+
+- `npm run build` produces `frontend/dist/`, which is copied into `src/main/resources/static/` before packaging (done by the Render build command below)
+- Spring Boot serves the React build, and `SpaForwardController` returns `index.html` for client-side routes (`/movies/**`, `/booking/**`, `/admin/**`, ...) while `/api/**` and `/uploads/**` are untouched
+- Same-origin means **no CORS config** is needed in production
+
+### Steps
+
+1. **Database — Neon** (free, persistent, never auto-deleted): create a project at neon.tech, copy its connection string → `SPRING_DATASOURCE_URL` (keep `?sslmode=require`)
+2. **App — Render**: `render.com` → New → Web Service → this repo
+   - **Build command:** `npm ci --prefix frontend && npm run build --prefix frontend && cp -r frontend/dist/. src/main/resources/static/ && ./mvnw package -DskipTests`
+   - **Start command:** `java -jar target/movie-reservation.jar`
+   - **Java version:** 17
+   - **Env vars:** the four above (from the Neon project; `JWT_SECRET` = `openssl rand -base64 48`)
+3. **Verify:** `curl https://<app>.onrender.com/api/health` → `{"status":"UP"}`
+4. Smoke test the public URL: register → browse → book → mock pay → ticket QR; upload a poster via the admin movie form.
+
+> **Note:** uploads live on Render's ephemeral disk and are lost on redeploy (users, bookings, tickets persist in Neon). For demo purposes this is fine; long-term persistence would need an object store.
+
 ## What's Implemented
 
 ### Authentication & Security
@@ -109,7 +148,7 @@ npm run dev
 
 ### Showtimes & Seats
 - **Admin showtime creation** — `POST /api/admin/showtimes` accepts movieId, screenId, showDate, showTime, pricePerSeat; validates required fields, non-negative price, future show date, and rejects duplicate movie+screen+date+time combos (W4 Mon)
-- **Showtime update validation** — `PUT /api/admin/showtimes/{id}` also rejects past dates and negative prices (W4 Mon)
+- **Showtime update** — `PUT /api/admin/showtimes/{id}` rejects past dates and negative prices (W4 Mon). **Movie/screen changeable (W4 Thu):** the request accepts optional `movieId`/`screenId`; when either differs from the current showtime (and no active bookings exist) the controller validates the movie/screen, duplicate-checks the new movie+screen+date+time combo (excluding the showtime itself), deletes the old `seats` + `reservation_seats` links, **regenerates the seat layout from the new screen's capacity**, and updates the row — all in one `@Transactional`. Edits that keep the movie/screen use the existing `updateDateTimePrice` path. Updating is blocked while any PENDING/CONFIRMED booking exists
 - **Auto seat generation** — when a showtime is created, seats are automatically generated based on the screen's capacity (e.g. Screen 5 → 180 seats → 12 rows × 15)
 - **Public showtime listing** — `GET /api/showtimes?movieId={id}` returns all showtimes for a movie with screen name, available seat count, and price
 - **Seat layout endpoint** — `GET /api/showtimes/{showtimeId}/seats` returns all seats with `id`, `seatNumber`, `rowLabel`, `status` ("AVAILABLE" / "HELD" / "BOOKED"), and `heldByMe`; optional `?heldReservationId=` so a user's own held seats show as AVAILABLE (change-seats mode)
@@ -120,6 +159,7 @@ npm run dev
 - **Movie filtering/sorting/pagination** — `MovieRepository` supports filtered queries by genre and availability (has showtimes or not), with server-side sorting and LIMIT/OFFSET pagination. Returns `{ content, totalPages, totalElements, currentPage, size }`
 - **PostgreSQL 18 compatibility** — JDBC prepared statements with BIGINT columns reject implicit VARCHAR-to-BIGINT conversion. All genre ID queries use `Long` instead of `String` to avoid `operator does not exist: bigint = character varying`
 - **File storage** — `FileStorageService` handles safe file deletion for poster/photo replacements and movie deletions (skips nulls, external URLs, and defaults; logs at INFO level)
+- **Admin reports** — `GET /api/admin/reports/revenue` (total revenue + bookings, breakdowns grouped by movie/screen/date for `CONFIRMED` reservations) and `GET /api/admin/reports/capacity` (occupancy % per showtime/screen = active `reservation_seats` ÷ `total_seats`). New `AdminReportController` (W4 Wed)
 - **Global exception handler** — returns structured JSON errors:
   - `404` — `ResourceNotFoundException`
   - `401` — `UnauthorizedException`
@@ -129,7 +169,9 @@ npm run dev
 
 ### UI & Design
 - **Cinema Noir theme** — dark color palette (`#0A0A0A` background, `#141414` surface, `#E50914` primary red, `#FFC107` gold accent) defined as CSS custom properties in `index.css` for easy palette swaps
-- **Netflix-style hero banner** — full-viewport home page with background cinema image (`public/cinema-background.jpeg`), multi-layer gradient overlay (left-to-right + bottom-to-top) for text readability over the image
+- **Netflix-style hero banner** — full-viewport home page with a **background video** (`public/back_vid_black_white.mp4`, `poster` fallback to `public/cinema-background.jpeg`), multi-layer gradient overlay (left-to-right + bottom-to-top) for text readability, the **CINEMAX** brand, a **typewriter tagline** ("Browse Shows · Pick Your Seat · Skip the Line"), and CTA buttons (Browse Shows / Sign Up, or Browse Movies when logged in)
+- **Home marquee rows** — `MovieMarquee.jsx` renders scrolling **Now Showing** and **Coming Soon** rows on the home page (animated CSS marquee when ≥5 movies, horizontally scrollable otherwise; cards link to slug URLs)
+- **Slim footer** — `Footer.jsx` (`© {year} CINEMAX`, `h-16`, top border) pinned to the bottom of every page via a `min-h-screen flex flex-col` app shell in `App.jsx` (`<main className="flex-1">`)
 - **Transparent navbar** — gradient overlay navbar that sits on top of the hero banner, with `position: absolute` so the hero extends behind it
 - **Lenis smooth scroll** — initialized in `App.jsx` for buttery smooth scrolling across all pages
 - **Lucide React icons** — used throughout the app for consistent, lightweight iconography (Film, LogIn, LogOut, UserPlus, Shield, ArrowLeft, Clock, Globe, etc.)
@@ -162,10 +204,13 @@ npm run dev
 - **BookingConfirmationPage** — booking summary at `/booking/:showtimeId/confirm`. **Two-step hold flow:** "Confirm Booking" creates a PENDING hold (2-min countdown), then "Complete Booking" (mock payment) flips it to CONFIRMED via `POST /api/reservations/{id}/confirm`. "Cancel Hold" releases the seats. Expiry shows "Hold Expired" and links back to seat selection. Success state with reservation ID and full details, plus **"Change Seats"** (→ change mode) and **"Cancel Reservation"** buttons. Handles: missing route state guard, loading/error/confirming states
 - **UserReservationsPage** — "My Bookings" at `/my-bookings` (ProtectedRoute). Lists the user's reservations (PENDING/CONFIRMED/CANCELLED) with movie, screen, date/time, seats, amount, and status badge. **"Change Seats"** (→ change mode) and **"Cancel Booking"** buttons per booking
 - **Navbar** — now shows a "My Bookings" link (desktop + mobile) for logged-in users
-- **AdminShowtimePage** — create showtimes at `/admin/showtimes`. Movie + screen dropdowns, date/time/price inputs, seat preview, success summary with seat count
 - **AdminReservationPage** — admin booking management at `/admin/reservations`. Screen filter dropdown, 2-column card grid showing movie title, screen, date/time, user, seats, amount, and status badge (PENDING shows a yellow badge with a cancel button). Individual "Cancel Booking" buttons plus a "Cancel All" button that bulk-cancels every active (PENDING/CONFIRMED) booking for the selected screen. Confirmation dialogs, loading/error/empty states
 - **Admin booking seat grid** — once a screen is selected, cascading **Show → Time** dropdowns (from `GET /api/admin/showtimes?screenId=`) drive a read-only seat grid (`GET /api/admin/showtimes/{id}/seats`) identical in look to the user's seat picker: green=available, yellow=held, red=booked. Clicking a booked/held seat cancels that whole reservation (with a confirm dialog showing the owner + amount); a "Cancel All (showtime)" button bulk-cancels every active booking for the showtime. The card list remains for the "All Screens" view
-- **AdminShowtimePage** — full management page at `/admin/showtimes`: create form (unchanged) plus an "All Showtimes" list with movie filter, per-showtime Edit/Delete, and an active-bookings badge. Edit pre-fills the form in update mode (movie/screen locked) and calls `PUT /api/admin/showtimes/{id}`; Delete calls the existing `DELETE` API. Edit/Delete are disabled while the showtime has active bookings (blocked server-side too)
+- **AdminShowtimePage** — full management page at `/admin/showtimes`: create form plus an "All Showtimes" list with movie filter, per-showtime Edit/Delete, and an active-bookings badge. Edit pre-fills the form in update mode and calls `PUT /api/admin/showtimes/{id}`; Delete calls the existing `DELETE` API. **Since W4 Thu the Movie/Screen selects are enabled while editing** — the showtime can be moved to a different movie/screen (seats regenerate from the new screen) whenever it has no active bookings; the form shows a "Changing the screen regenerates the seat layout" notice. Edit/Delete are disabled while the showtime has active bookings (blocked server-side too)
+- **Admin back-to-dashboard links (W4 Thu)** — Showtimes and Bookings pages now have a yellow-accent "Back to Dashboard" link; the same accent was applied to the back links on Genres, Movies, and the movie form
+- **Contrast/readability polish (W4 Thu)** — red text on red/dark backgrounds was hard to read. Info pills/badges and back links now use the gold accent (`--color-accent`), destructive buttons/links are neutral (like Edit) instead of red, avatar/cast initials render white on `--color-surface`, admin dashboard card titles are white, and the 404 page uses the accent
+- **AdminDashboard with charts** — upgraded from nav cards to a stats dashboard: stat cards (total revenue, bookings, avg occupancy, showtimes) + **Revenue by Movie** and **Occupancy by Screen** bar charts via **recharts** (new dependency), with loading/error/empty states; the management nav cards remain below (W4 Wed)
+- **AccountPage** — `/account` (ProtectedRoute) calls the previously-unused `GET /api/auth/me` and shows username, email, role badge, member-since date, and a logout button. "Account" link added to the navbar (desktop + mobile) (W4 Wed)
 
 ---
 
@@ -286,6 +331,15 @@ Auto-seeded on startup:
 | actor_id  | BIGINT     | FK → actors(id)         |
 | role_name | VARCHAR(255)|                       |
 
+### tickets
+| Column         | Type         | Constraint                          |
+|---------------|--------------|-------------------------------------|
+| id            | BIGSERIAL    | PRIMARY KEY                         |
+| reservation_id| BIGINT       | NOT NULL, FK → reservations(id) ON DELETE CASCADE |
+| token         | VARCHAR(64)  | UNIQUE, NOT NULL — one per confirmed reservation, generated on confirm (W3 Thu) |
+| status        | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE' ('ACTIVE' → 'USED' on first scan) |
+| created_at    | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP |
+
 ---
 
 ## API Endpoints
@@ -298,7 +352,7 @@ Auto-seeded on startup:
 | POST   | /api/auth/login       | Public         | Login, returns JWT   |
 | GET    | /api/auth/me          | Authenticated  | Get current user     |
 
-> Note: `GET /api/auth/me` exists in the backend but the frontend doesn't call it yet — the app stores the user object from the login response. Planned future use: user profile/account page or refreshing user state (Week 3).
+> Note: `GET /api/auth/me` is used by the **AccountPage** (`/account`, W4 Wed) to render the current user's profile. The app otherwise stores the user object from the login response.
 
 ### Genres
 | Method | Endpoint              | Access         | Description          |
@@ -335,7 +389,7 @@ Auto-seeded on startup:
 | GET    | /api/showtimes/{showtimeId}/seats     | Public         | Get seat layout with status    |
 | POST   | /api/admin/showtimes                  | ADMIN          | Create showtime + generate seats |
 | GET    | /api/admin/showtimes?movieId=&screenId= | ADMIN        | List all showtimes (enriched: movie, screen, available seats, active bookings) with optional movie/screen filter |
-| PUT    | /api/admin/showtimes/{id}             | ADMIN          | Update showtime (date/time/price only — movie/screen fixed; blocks if active bookings exist) |
+| PUT    | /api/admin/showtimes/{id}             | ADMIN          | Update showtime — date/time/price always; optional `movieId`/`screenId` to move it to a different movie/screen (validates, duplicate-checks excluding self, deletes old seats, **regenerates seats from the new screen**) — blocks if active bookings exist |
 | DELETE | /api/admin/showtimes/{id}             | ADMIN          | Delete showtime (blocks if active bookings exist) |
 | GET    | /api/admin/showtimes/{id}/seats       | ADMIN          | Admin seat grid — per-seat status + reservation id/owner/amount |
 
@@ -363,8 +417,6 @@ Auto-seeded on startup:
 ### Up Next (Week 3 remaining)
 | Method | Endpoint                      | Access        | Description               |
 |--------|-------------------------------|---------------|---------------------------|
-| GET    | /api/admin/reports/revenue    | ADMIN         | Revenue report            |
-| GET    | /api/admin/reports/capacity   | ADMIN         | Capacity report           |
 | POST   | /api/payments/...             | Authenticated | Real payment initiation/confirm/cancel (PaymentProvider + Mock now, JazzCash/Easypaisa/SadaPay later) |
 
 ---
@@ -399,13 +451,13 @@ The following features are planned but **not yet implemented**:
 | **GET /api/reservations/my** | Backend endpoint returning the authenticated user's reservations | ✅ Done |
 | **Overbooking prevention** | `SELECT ... FOR UPDATE` in the reservation/change-seats transactions + `uq_active_reservation_seat` partial unique index (`reservation_seats.seat_id WHERE is_active`) as the DB hard-guard | ✅ Done |
 | **Change seats** | `PUT /api/reservations/{id}/seats` (PENDING + CONFIRMED, FOR UPDATE, available-or-held-by-me, recomputes total) + SeatSelectionPage change mode + "Change Seats" buttons | ✅ Done |
-| **Revenue report** | `GET /api/admin/reports/revenue` — total revenue grouped by movie/screen/date | Not started |
-| **Capacity report** | `GET /api/admin/reports/capacity` — seat occupancy percentage per showtime/screen | Not started |
-| **AdminDashboard charts** | Upgrade `AdminDashboard.jsx` from navigation cards to a stats dashboard with revenue/capacity charts | Not started |
+| **Revenue report** | `GET /api/admin/reports/revenue` — total revenue grouped by movie/screen/date | ✅ Done (W4 Wed) |
+| **Capacity report** | `GET /api/admin/reports/capacity` — seat occupancy percentage per showtime/screen | ✅ Done (W4 Wed) |
+| **AdminDashboard charts** | Upgrade `AdminDashboard.jsx` from navigation cards to a stats dashboard with revenue/capacity charts | ✅ Done (W4 Wed) |
 | **Error pages** | Dedicated 404 page (`NotFoundPage` + catch-all route); other pages keep per-page error banners | ✅ Done (W3 Thu) |
 | **End-to-end testing** | Full test pass over backend APIs and frontend user flows (book → hold → mock pay → cancel, change seats, admin management) | ✅ Done (W3 Fri, 39/39 PASS live) |
-| **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price only — movie/screen changes would invalidate seats/bookings). Blocks if CONFIRMED/PENDING bookings exist | ✅ Done (W3 Tue) |
-| **AdminShowtimePage management UI** | Upgraded the create-only showtime page into a full management page: list existing showtimes (with movie filter), delete button per showtime, edit button that pre-fills the form and switches to update mode (movie/screen locked). Refresh the list after create/update/delete. Active-bookings badge disables edit/delete while locked | ✅ Done (W3 Tue) |
+| **PUT /api/admin/showtimes/{id}** | Backend endpoint to update a showtime (date/time/price always; optional `movieId`/`screenId` to change the movie/screen when unlocked — seats regenerate from the new screen, duplicate-checked excluding self). Blocks if CONFIRMED/PENDING bookings exist | ✅ Done (W3 Tue; movie/screen change W4 Thu) |
+| **AdminShowtimePage management UI** | Upgraded the create-only showtime page into a full management page: list existing showtimes (with movie filter), delete button per showtime, edit button that pre-fills the form and switches to update mode (**Movie/Screen selects enabled since W4 Thu** — changing the screen regenerates the seat layout). Refresh the list after create/update/delete. Active-bookings badge disables edit/delete while locked | ✅ Done (W3 Tue; edit unlock W4 Thu) |
 | **Payment integration** | JazzCash/Easypaisa/SadaPay via a `PaymentProvider` interface + Mock implementation. The 2-min PENDING hold and `POST /api/reservations/{id}/confirm` are already in place as the seam. Real flow: initiate provider payment → provider callback/webhook validates and flips to `CONFIRMED`. Abandon / failure / expiry releases seats. `payments` table tracks reservation_id, amount, provider, txn id, status, paid_at. Amount is always computed server-side (never trust the client). Production needs merchant/business accounts + sandbox keys; amounts in PKR; dev webhooks need a public URL (ngrok) | Not started |
 | **Digital ticket + QR validation** | After payment confirms, "Download Ticket" renders a printable ticket (movie, screen, date/time, seats, amount, ticket code + QR generated client-side with the `qrcode` lib). The venue/recipient scans the QR → `GET /api/tickets/{ticketToken}` returns VALID/INVALID (no user PII); the first successful scan marks the ticket **USED** → rescanning shows "ALREADY USED". INVALID if token unknown, reservation `CANCELLED`, or showtime has passed. Ticket identity stored server-side (`tickets` table) so the QR is verifiable even though it's rendered on the client. The buyer's own page uses the non-consuming `GET /api/tickets/{ticketToken}/details` so viewing/printing never consumes the ticket | 🟢 Done (W3 Thu backend + W3 Fri QR page) |
 
@@ -426,8 +478,8 @@ The following features are planned but **not yet implemented**:
 2. ✅ **Overbooking prevention** — `SELECT FOR UPDATE` on seat rows + `uq_active_reservation_seat` partial unique index (done before payment so holds are race-safe)
 3. ✅ **Change seats** — `PUT /api/reservations/{id}/seats` + SeatSelectionPage change mode (PENDING + CONFIRMED)
 4. ✅ **Showtime management** — `PUT /api/admin/showtimes/{id}` + management UI on `AdminShowtimePage` (delete button uses the existing `DELETE` API; edit pre-fills the form). List existing showtimes with a movie/screen filter so admins can fix mistakes
-5. **Revenue + capacity reports** — feed the admin dashboard charts
-6. **AdminDashboard with charts/stats** — visual overview for admins
+5. ✅ **Revenue + capacity reports** — feed the admin dashboard charts (W4 Wed)
+6. ✅ **AdminDashboard with charts/stats** — visual overview for admins (W4 Wed)
 7. ✅ **Error pages + polish** — 404 page (`NotFoundPage` + catch-all route); consistent loading states in progress
 8. ✅ **End-to-end testing** — full live test pass W3 Fri (39/39) covering book → hold → mock pay → ticket, change seats, hold expiry, admin showtime/movie guards + bulk cancel, seat grid, genre CRUD, and error cases
 9. **Payment integration** — `PaymentProvider` interface + Mock provider, then swap in JazzCash/Easypaisa/SadaPay (the PENDING hold + `confirm` endpoint are the seam)
@@ -445,8 +497,12 @@ The **W3 Thu pass** added: the **digital ticket backend** — `tickets` table (t
 
 The **W3 Fri pass** finished the digital ticket feature and closed Week 3: **non-consuming `GET /api/tickets/{ticketToken}/details`** (the scan endpoint marks USED on first call, so the buyer's own page must not use it), **`ticketToken` in `GET /api/reservations/my`**, the **printable QR ticket page** (`/tickets/:token` — Cinema Noir ticket card + client-side QR via `qrcode` + Print; VALID / ALREADY USED / INVALID states) with **View Ticket** buttons on the confirmation page and My Bookings, bug #17 (unknown `/api/**` → 404), and a **full live end-to-end test pass (39/39)** — book → hold → mock pay → ticket VALID→USED, change seats on PENDING + CONFIRMED, backdated-hold expiry, admin showtime/movie delete+update guards, bulk cancel, admin seat grid, genre CRUD, and error cases (400 malformed JSON / double-cancel / seat-taken, 404, INVALID). All E2E data cleaned — DB reset to baseline.
 
-Remaining Week 3 work: **only the payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**; revenue/capacity reports, admin dashboard charts, and the account page were deferred to Week 4. See the **Remaining Week 3 Features** section above.
+Remaining Week 3 work: **only the payment integration (JazzCash/Easypaisa/SadaPay + Mock via the PENDING hold/confirm seam)**; revenue/capacity reports, admin dashboard charts, and the account page were deferred to Week 4 — and are now **done (W4 Wed)**. See the **Remaining Week 3 Features** section above.
 
 The **W4 Mon pass** (test all endpoints + fix edge cases) added backend hardening: **showtime validation** (missing `movieId`/`screenId`/`showDate`/`showTime`/`pricePerSeat` → 400, negative price → 400, past show date → 400, duplicate movie+screen+date+time → 400 — enforced on create and update), **signup bean validation** (`@Valid` + `MethodArgumentNotValidException` → 400 with field message), **movie pagination bounds** (`page ≥ 0`, `size 1–100` → 400), and **JSON 401/403 responses** (`authenticationEntryPoint` / `accessDeniedHandler` in `SecurityConfig` return `{"message":"Unauthorized"}` / `{"message":"Access denied"}` instead of Spring's HTML error page). Full live test pass: **48/48 PASS** (39-regression suite + 9 new edge-case checks: missing/negative/past/duplicate showtime fields, update guards, pagination bounds, 401/403 JSON, non-admin 403).
 
 The **W4 Tue pass** (test all frontend flows + mobile fixes) reviewed every page for mobile responsiveness, fixed the **seat grid overflow** on phones (15 seats/row previously fixed at 32px ≈ 570px → now responsive `w-6→w-8` scaling + `overflow-x-auto` fallback; the admin grid already wrapped), cleaned 3 unused-variable lint warnings (`AdminMovieForm`, `AdminGenrePage`, `AdminShowtimePage`), and **changed all currency displays from `$` to `PKR`** (movie detail, booking confirmation ×4, ticket page + dollar icon → banknote, My Bookings, admin reservations ×2, admin showtime label + `/seat`). Verified via `vite build` + `oxlint` (1 intentional warning) + Vite proxy `/api` and `/uploads` passthrough.
+
+The **W4 Wed pass** (final polish + carried-over analytics) added the **admin reports** — new `AdminReportController` with `GET /api/admin/reports/revenue` (total revenue + bookings, grouped by movie/screen/date over `CONFIRMED` reservations) and `GET /api/admin/reports/capacity` (occupancy % per showtime/screen = active `reservation_seats` ÷ `total_seats`) — and upgraded **`AdminDashboard.jsx`** from nav cards to a stats dashboard: 4 stat cards (total revenue, bookings, avg occupancy, showtimes) + **Revenue by Movie** and **Occupancy by Screen** bar charts via the new **recharts** dependency (loading/error/empty states; management nav cards kept below). Also added the **`/account` page** (`AccountPage.jsx`, ProtectedRoute) using the previously-unused `GET /api/auth/me` (username, email, role badge, member-since, logout) with an **Account** link in the navbar. Verified: `mvnw compile` clean, `vite build` clean (recharts bumps the main chunk to ~812 kB), `oxlint` (1 intentional pre-existing warning), and all 5 report SQL queries validated live against Postgres.
+
+The **W4 Thu pass** (final UI polish + showtime edit unlock) made **movie/screen changeable on showtime edit**: `PUT /api/admin/showtimes/{id}` now accepts optional `movieId`/`screenId` — when either differs (and no active bookings exist) it validates the movie/screen, duplicate-checks the new combo excluding the showtime itself, deletes the old seats + `reservation_seats` links, **regenerates the seat layout from the new screen's capacity**, and updates the row, all in one `@Transactional` (seat generation extracted into a shared `generateSeatsForShowtime` helper reused by create + update; date/time/price-only edits keep the old path). The **AdminShowtimePage** edit form enables the Movie/Screen selects (with a "Changing the screen regenerates the seat layout" notice) and sends both ids. Also did a **contrast/readability pass** across 12 frontend files (info pills/badges + back links → gold accent, destructive buttons/links → neutral, avatar/cast initials white on surface, dashboard card titles white, 404 accent), added **Back to Dashboard** links to the Showtimes/Bookings admin pages, and added the slim **Footer** (`© {year} CINEMAX`, flex-column app shell in `App.jsx`). Verified: `mvnw compile` clean + `vite build` clean.
