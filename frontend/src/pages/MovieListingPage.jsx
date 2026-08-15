@@ -81,26 +81,29 @@ function MovieListingPage() {
   const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 pt-20">
-      {/* Header banner with static reel background */}
-      <div className="relative rounded-2xl overflow-hidden mb-8">
+    <div className="relative min-h-screen">
+      {/* Reel background band: fixed, inset from screen edges, ends at the footer */}
+      <div className="fixed inset-x-4 top-0 bottom-16 rounded-2xl overflow-hidden">
         <div
-          className="absolute -inset-4 bg-scroll lg:bg-fixed"
+          className="absolute inset-0"
           style={{
             backgroundImage: "url('/reel.jpg')",
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent)',
+            maskImage: 'linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent)',
           }}
         />
+        {/* Uniform black filter */}
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(10,10,10,0.82)' }} />
+        {/* Bottom fade so the reel ends cleanly just before the footer */}
         <div
-          className="absolute inset-0"
-          style={{
-            backdropFilter: 'blur(6px) grayscale(0.3) brightness(0.8)',
-            backgroundColor: 'rgba(10,10,10,0.45)',
-          }}
+          className="absolute inset-x-0 bottom-0 h-40"
+          style={{ background: 'linear-gradient(to top, var(--color-bg), transparent)' }}
         />
-        <div className="relative z-10 p-8 sm:p-12 min-h-[300px] flex flex-col justify-center">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>Browse Movies</h1>
+      </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 pt-20">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>Browse Movies</h1>
 
           {/* Tabs */}
           <div className="flex gap-1 mb-6 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -119,7 +122,7 @@ function MovieListingPage() {
           </div>
 
           {/* Filters Row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
               <select
@@ -150,8 +153,6 @@ function MovieListingPage() {
               ))}
             </div>
           </div>
-        </div>
-      </div>
 
       {/* Movie Grid */}
       {loading ? (
@@ -242,6 +243,7 @@ function MovieListingPage() {
           </button>
         </div>
       )}
+      </div>
     </div>
   )
 }

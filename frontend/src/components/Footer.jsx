@@ -6,6 +6,8 @@ function Footer() {
         background: 'var(--color-bg)',
         borderTop: '1px solid var(--color-border)',
         color: 'var(--color-text-muted)',
+        position: 'relative',
+        zIndex: 10,
       }}
     >
       <span className="text-sm">
