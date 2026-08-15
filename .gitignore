@@ -49,3 +49,9 @@ BUGS.md
 
 # frontend reademe.md which comes during react installation
 frontend/README.md
+
+# Local-only documentation (kept privately; not published to GitHub)
+docs/
+CONTRIBUTING.md
+SECURITY.md
+README-TECHNICAL.md
