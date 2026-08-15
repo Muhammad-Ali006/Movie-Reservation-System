@@ -82,54 +82,74 @@ function MovieListingPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 pt-20">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>Browse Movies</h1>
+      {/* Header banner with static reel background */}
+      <div className="relative rounded-2xl overflow-hidden mb-8">
+        <div
+          className="absolute -inset-4 bg-scroll lg:bg-fixed"
+          style={{
+            backgroundImage: "url('/reel.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            backdropFilter: 'blur(6px) grayscale(0.3) brightness(0.8)',
+            backgroundColor: 'rgba(10,10,10,0.45)',
+          }}
+        />
+        <div className="relative z-10 p-8 sm:p-12 min-h-[300px] flex flex-col justify-center">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>Browse Movies</h1>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--color-surface)' }}>
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className="px-4 py-2 rounded-md text-sm font-medium transition-all"
-            style={{
-              backgroundColor: activeTab === tab.key ? 'var(--color-primary)' : 'transparent',
-              color: activeTab === tab.key ? '#fff' : 'var(--color-text-muted)',
-            }}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Filters Row */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
-          <select
-            value={selectedGenre}
-            onChange={(e) => handleGenreChange(e.target.value)}
-            className="rounded-lg px-3 py-2 text-sm"
-            style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}>
-            <option value="">All Genres</option>
-            {genres.map(g => (
-              <option key={g.id} value={g.id}>{g.name}</option>
+          {/* Tabs */}
+          <div className="flex gap-1 mb-6 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--color-surface)' }}>
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => handleTabChange(tab.key)}
+                className="px-4 py-2 rounded-md text-sm font-medium transition-all"
+                style={{
+                  backgroundColor: activeTab === tab.key ? 'var(--color-primary)' : 'transparent',
+                  color: activeTab === tab.key ? '#fff' : 'var(--color-text-muted)',
+                }}>
+                {tab.label}
+              </button>
             ))}
-          </select>
-        </div>
+          </div>
 
-        <div className="flex gap-1 flex-wrap">
-          {SORT_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => handleSortChange(opt.value)}
-              className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
-              style={{
-                backgroundColor: sortBy === opt.value ? 'var(--color-primary)' : 'var(--color-surface)',
-                color: sortBy === opt.value ? '#fff' : 'var(--color-text-muted)',
-                border: '1px solid var(--color-border)',
-              }}>
-              {opt.label} {sortBy === opt.value ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-            </button>
-          ))}
+          {/* Filters Row */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
+              <select
+                value={selectedGenre}
+                onChange={(e) => handleGenreChange(e.target.value)}
+                className="rounded-lg px-3 py-2 text-sm"
+                style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}>
+                <option value="">All Genres</option>
+                {genres.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-1 flex-wrap">
+              {SORT_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSortChange(opt.value)}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+                  style={{
+                    backgroundColor: sortBy === opt.value ? 'var(--color-primary)' : 'var(--color-surface)',
+                    color: sortBy === opt.value ? '#fff' : 'var(--color-text-muted)',
+                    border: '1px solid var(--color-border)',
+                  }}>
+                  {opt.label} {sortBy === opt.value ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
