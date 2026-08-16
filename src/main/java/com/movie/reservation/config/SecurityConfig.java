@@ -48,6 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll()
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/genres/**", "/api/movies/**", "/api/showtimes/**", "/api/screens/**", "/api/tickets/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/media/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/", "/index.html", "/assets/**").permitAll()
                 .requestMatchers("/*.svg", "/*.jpg", "/*.jpeg", "/*.jfif", "/*.mp4").permitAll()
