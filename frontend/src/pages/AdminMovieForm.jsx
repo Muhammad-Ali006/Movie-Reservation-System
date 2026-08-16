@@ -121,6 +121,7 @@ function AdminMovieForm() {
       form.append('file', posterFile)
       const res = await api.post(`/admin/movies/${movieId}/poster`, form, { headers: { 'Content-Type': 'multipart/form-data' } })
       setFormData({ ...formData, posterUrl: res.data.posterUrl })
+      setPosterPreview(res.data.posterUrl + '?t=' + Date.now())
       setPosterFile(null)
     } catch (err) {
       setPosterError(err.response?.data?.message || 'Failed to upload poster')
