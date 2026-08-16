@@ -102,3 +102,14 @@ CREATE TABLE IF NOT EXISTS tickets (
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS media (
+    id BIGSERIAL PRIMARY KEY,
+    entity_type VARCHAR(20) NOT NULL,
+    entity_id BIGINT NOT NULL,
+    file_name VARCHAR(255),
+    content_type VARCHAR(100),
+    data BYTEA NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(entity_type, entity_id)
+);
