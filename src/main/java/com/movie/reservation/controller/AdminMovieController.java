@@ -6,6 +6,7 @@ import com.movie.reservation.model.Actor;
 import com.movie.reservation.model.Movie;
 import com.movie.reservation.model.MovieCast;
 import com.movie.reservation.repository.ActorRepository;
+import com.movie.reservation.repository.MediaRepository;
 import com.movie.reservation.repository.MovieCastRepository;
 import com.movie.reservation.repository.MovieRepository;
 import com.movie.reservation.service.FileStorageService;
@@ -16,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,17 +30,20 @@ public class AdminMovieController {
     private final ActorRepository actorRepository;
     private final MovieCastRepository movieCastRepository;
     private final FileStorageService fileStorageService;
+    private final MediaRepository mediaRepository;
     private final JdbcTemplate jdbcTemplate;
 
     public AdminMovieController(MovieRepository movieRepository,
                                  ActorRepository actorRepository,
                                  MovieCastRepository movieCastRepository,
                                  FileStorageService fileStorageService,
+                                 MediaRepository mediaRepository,
                                  JdbcTemplate jdbcTemplate) {
         this.movieRepository = movieRepository;
         this.actorRepository = actorRepository;
         this.movieCastRepository = movieCastRepository;
         this.fileStorageService = fileStorageService;
+        this.mediaRepository = mediaRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -145,14 +146,11 @@ public class AdminMovieController {
         String oldPosterUrl = movie.getPosterUrl();
 
         try {
-            String uploadDir = "uploads/posters/";
-            Files.createDirectories(Paths.get(uploadDir));
-
             String fileName = id + "_" + UUID.randomUUID().toString().substring(0, 8) + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(uploadDir + fileName);
-            Files.write(filePath, file.getBytes());
+            String contentType = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
+            mediaRepository.upsert(MediaRepository.TYPE_MOVIE_POSTER, id, fileName, contentType, file.getBytes());
 
-            String posterUrl = "/uploads/posters/" + fileName;
+            String posterUrl = "/api/media/movies/" + id + "/poster";
             movieRepository.updatePosterUrl(id, posterUrl);
 
             if (oldPosterUrl != null && !oldPosterUrl.equals(posterUrl)) {
@@ -162,7 +160,7 @@ public class AdminMovieController {
             Map<String, String> response = new HashMap<>();
             response.put("posterUrl", posterUrl);
             return ResponseEntity.ok(response);
-        } catch (IOException e) {
+        } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Failed to upload poster");
             return ResponseEntity.internalServerError().body(error);
@@ -181,32 +179,17 @@ public class AdminMovieController {
         Actor actor = actorRepository.findByName(actorName.trim()).orElseGet(() -> {
             Actor newActor = new Actor();
             newActor.setName(actorName.trim());
-
-            if (photo != null && !photo.isEmpty()) {
-                try {
-                    String uploadDir = "uploads/actors/";
-                    Files.createDirectories(Paths.get(uploadDir));
-                    String fileName = UUID.randomUUID().toString().substring(0, 8) + "_" + photo.getOriginalFilename();
-                    Path filePath = Paths.get(uploadDir + fileName);
-                    Files.write(filePath, photo.getBytes());
-                    newActor.setPhotoUrl("/uploads/actors/" + fileName);
-                } catch (IOException e) {
-                    newActor.setPhotoUrl(null);
-                }
-            }
-
             return actorRepository.save(newActor);
         });
 
         if (photo != null && !photo.isEmpty()) {
             String oldPhotoUrl = actor.getPhotoUrl();
             try {
-                String uploadDir = "uploads/actors/";
-                Files.createDirectories(Paths.get(uploadDir));
                 String fileName = UUID.randomUUID().toString().substring(0, 8) + "_" + photo.getOriginalFilename();
-                Path filePath = Paths.get(uploadDir + fileName);
-                Files.write(filePath, photo.getBytes());
-                String newPhotoUrl = "/uploads/actors/" + fileName;
+                String contentType = (photo.getContentType() != null) ? photo.getContentType() : "application/octet-stream";
+                mediaRepository.upsert(MediaRepository.TYPE_ACTOR_PHOTO, actor.getId(), fileName, contentType, photo.getBytes());
+
+                String newPhotoUrl = "/api/media/actors/" + actor.getId() + "/photo";
                 actor.setPhotoUrl(newPhotoUrl);
                 actorRepository.update(actor);
 
