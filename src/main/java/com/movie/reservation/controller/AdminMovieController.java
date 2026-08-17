@@ -150,7 +150,7 @@ public class AdminMovieController {
             String contentType = (file.getContentType() != null) ? file.getContentType() : "application/octet-stream";
             mediaRepository.upsert(MediaRepository.TYPE_MOVIE_POSTER, id, fileName, contentType, file.getBytes());
 
-            String posterUrl = "/api/media/movies/" + id + "/poster";
+            String posterUrl = "/api/media/movies/" + id + "/poster?v=" + System.currentTimeMillis();
             movieRepository.updatePosterUrl(id, posterUrl);
 
             if (oldPosterUrl != null && !oldPosterUrl.equals(posterUrl)) {
@@ -189,7 +189,7 @@ public class AdminMovieController {
                 String contentType = (photo.getContentType() != null) ? photo.getContentType() : "application/octet-stream";
                 mediaRepository.upsert(MediaRepository.TYPE_ACTOR_PHOTO, actor.getId(), fileName, contentType, photo.getBytes());
 
-                String newPhotoUrl = "/api/media/actors/" + actor.getId() + "/photo";
+                String newPhotoUrl = "/api/media/actors/" + actor.getId() + "/photo?v=" + System.currentTimeMillis();
                 actor.setPhotoUrl(newPhotoUrl);
                 actorRepository.update(actor);
 
