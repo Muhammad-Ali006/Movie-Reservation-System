@@ -77,7 +77,7 @@ function MovieDetailPage() {
   if (error) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-8 pt-20">
-        <Link to="/movies" className="flex items-center gap-1 text-sm mb-4 block" style={{ color: 'var(--color-primary)' }}>
+        <Link to="/movies" className="flex items-center gap-1 text-sm mb-4 block" style={{ color: 'var(--color-accent)' }}>
           <ArrowLeft className="w-4 h-4" /> Back to Movies
         </Link>
         <div className="p-3 rounded text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>{error}</div>
@@ -88,7 +88,7 @@ function MovieDetailPage() {
   if (!movie) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-8 pt-20">
-        <Link to="/movies" className="flex items-center gap-1 text-sm mb-4 block" style={{ color: 'var(--color-primary)' }}>
+        <Link to="/movies" className="flex items-center gap-1 text-sm mb-4 block" style={{ color: 'var(--color-accent)' }}>
           <ArrowLeft className="w-4 h-4" /> Back to Movies
         </Link>
         <p style={{ color: 'var(--color-text-muted)' }}>Movie not found.</p>
@@ -98,7 +98,7 @@ function MovieDetailPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8 pt-20">
-      <Link to="/movies" className="flex items-center gap-1 text-sm mb-6" style={{ color: 'var(--color-primary)' }}>
+      <Link to="/movies" className="flex items-center gap-1 text-sm mb-6" style={{ color: 'var(--color-accent)' }}>
         <ArrowLeft className="w-4 h-4" /> Back to Movies
       </Link>
 
@@ -214,7 +214,7 @@ function MovieDetailPage() {
                     className="rounded-lg p-4 transition-all block"
                     style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>
+                      <span className="text-2xl font-bold" style={{ color: 'var(--color-accent)' }}>
                         {formatTime(showtime.showTime)}
                       </span>
                       <span className="text-lg font-semibold" style={{ color: 'var(--color-accent)' }}>
@@ -236,7 +236,7 @@ function MovieDetailPage() {
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--color-primary)' }}>
+                    <div className="mt-3 flex items-center gap-1 text-xs font-medium" style={{ color: 'var(--color-accent)' }}>
                       Select Seats <ChevronRight className="w-3 h-3" />
                     </div>
                   </Link>
