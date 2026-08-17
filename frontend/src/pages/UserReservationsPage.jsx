@@ -33,7 +33,8 @@ function UserReservationsPage() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+    const d = typeof dateStr === 'number' ? new Date(dateStr) : new Date(dateStr + 'T00:00:00')
+    return d.toLocaleDateString('en-US', {
       weekday: 'short', month: 'short', day: 'numeric'
     })
   }
