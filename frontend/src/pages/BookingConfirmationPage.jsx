@@ -226,11 +226,11 @@ function BookingConfirmationPage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
             {confirmed.ticketToken && (
               <Link
                 to={`/tickets/${confirmed.ticketToken}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                 style={{
                   backgroundColor: 'transparent',
                   color: 'var(--color-success)',
@@ -242,7 +242,7 @@ function BookingConfirmationPage() {
             )}
             <Link
               to="/movies"
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold"
               style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}
             >
               Back to Movies
@@ -250,7 +250,7 @@ function BookingConfirmationPage() {
             <Link
               to={`/booking/${showtimeId}/change`}
               state={{ changeMode: true, reservationId: confirmed.id }}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
                 backgroundColor: 'transparent',
                 color: 'var(--color-accent)',
@@ -262,7 +262,7 @@ function BookingConfirmationPage() {
             <button
               onClick={handleCancelConfirmed}
               disabled={cancelling}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
                 backgroundColor: 'transparent',
                 color: cancelling ? 'var(--color-text-muted)' : 'var(--color-error)',
