@@ -32,7 +32,7 @@ function MovieListingPage() {
     try {
       const params = {
         page,
-        size: 6,
+        size: 8,
         sortBy,
         sortDir,
       }
