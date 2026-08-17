@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @RestController
@@ -113,7 +115,9 @@ public class ReservationController {
         response.put("totalAmount", reservation.getTotalAmount());
         response.put("seatIds", seatIds);
         response.put("createdAt", reservation.getCreatedAt());
-        response.put("pendingUntil", reservation.getPendingUntil());
+        response.put("pendingUntil", reservation.getPendingUntil() != null
+                ? reservation.getPendingUntil().atZone(ZoneId.of("UTC")).toInstant().toEpochMilli()
+                : null);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -303,6 +307,12 @@ public class ReservationController {
         """;
 
         List<Map<String, Object>> result = jdbcTemplate.queryForList(sql, userId);
+        for (Map<String, Object> row : result) {
+            Object pu = row.get("pendingUntil");
+            if (pu instanceof Timestamp ts) {
+                row.put("pendingUntil", ts.toInstant().toEpochMilli());
+            }
+        }
         return ResponseEntity.ok(result);
     }
 
