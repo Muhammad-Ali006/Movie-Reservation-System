@@ -90,6 +90,7 @@ function Signup() {
             </label>
             <div className="relative">
               <input
+                autoComplete="new-password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}

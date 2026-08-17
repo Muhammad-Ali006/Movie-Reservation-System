@@ -74,6 +74,7 @@ function Login() {
             </label>
             <div className="relative">
               <input
+                autoComplete="current-password"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
