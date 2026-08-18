@@ -312,6 +312,14 @@ public class ReservationController {
             if (pu instanceof Timestamp ts) {
                 row.put("pendingUntil", ts.toInstant().toEpochMilli());
             }
+            Object showDate = row.get("showDate");
+            if (showDate instanceof java.sql.Date sqlDate) {
+                row.put("showDate", sqlDate.toLocalDate().toString());
+            }
+            Object showTime = row.get("showTime");
+            if (showTime instanceof java.sql.Time sqlTime) {
+                row.put("showTime", sqlTime.toLocalTime().toString());
+            }
         }
         return ResponseEntity.ok(result);
     }
