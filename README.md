@@ -54,6 +54,30 @@ A full-stack movie reservation platform built with **Spring Boot, React, and Pos
 
 ---
 
+## Screenshots
+
+### User Flow
+
+| | |
+|---|---|
+| ![Homepage](screenshots/home.png) | ![Movie Listing](screenshots/movie-listing.png) |
+| **Homepage** — hero banner and trending rows | **Movie Listing** — tabs, filters, sorting, pagination |
+| ![Movie Detail](screenshots/movie-detail.png) | ![Seat Selection](screenshots/seat-selection.png) |
+| **Movie Detail** — metadata, synopsis, cast with photos | **Seat Selection** — interactive seat map with color legend |
+| ![Booking Confirmation](screenshots/booking-confirmation.png) | ![Digital Ticket](screenshots/ticket.png) |
+| **Booking Confirmation** — mock payment with countdown timer | **Digital Ticket** — printable ticket with QR code |
+| | ![My Bookings](screenshots/my-bookings.png) |
+| | **My Bookings** — reservation history with actions |
+
+### Admin Panel
+
+| | |
+|---|---|
+| ![Admin Dashboard](screenshots/admin-dashboard.png) | ![Admin Showtimes](screenshots/admin-showtimes.png) |
+| **Admin Dashboard** — revenue and occupancy analytics | **Admin Showtimes** — create, edit, delete showtimes |
+
+---
+
 ## Tech stack
 
 | Layer        | Technology                                      |
@@ -86,7 +110,7 @@ cd frontend && npm install && npm run dev   # → http://localhost:5173
 ```
 
 - The full app — API *and* UI — is served from **http://localhost:8080**. Verify with `curl http://localhost:8080/api/health` → `{"status":"UP"}`.
-- In dev mode, Vite (port 5173) proxies `/api` and `/uploads` to the backend.
+- In dev mode, Vite (port 5173) proxies `/api` and `/api/media` to the backend.
 - The schema and default data are created automatically on first boot: `schema.sql` runs `CREATE TABLE IF NOT EXISTS`, and a `DataSeeder` seeds the admin account and six cinema screens.
 
 **Default admin account:**
@@ -110,7 +134,7 @@ movie-reservation/
 │   ├── exception/     # Global exception handler + typed exceptions
 │   ├── model/         # Domain models
 │   ├── repository/    # JdbcTemplate-based data access
-│   ├── service/       # Business logic (auth, file storage)
+│   ├── service/       # Business logic (auth)
 │   └── util/          # JWT utilities
 ├── src/main/resources/
 │   ├── schema.sql                       # Auto-created DB schema
@@ -133,7 +157,7 @@ A **single, self-contained service**: Spring Boot serves both the `/api/**` back
 ```
 Browser (React SPA)
    │  GET /api/**            Authorization: Bearer <JWT>
-   │  GET /uploads/**        posters, actor photos, hero video
+   │  GET /api/media/**        posters, actor photos (BYTEA in DB), hero video
    ▼
 Spring Boot :8080
    ├─ SecurityConfig / JwtAuthFilter    stateless JWT auth, role checks
@@ -152,7 +176,7 @@ PostgreSQL (Neon / local)
 
 ## Database schema
 
-Eleven tables, auto-created from `schema.sql` (`IF NOT EXISTS`). The core relationships:
+Twelve tables, auto-created from `schema.sql` (`IF NOT EXISTS`). The core relationships:
 
 ```
 users ──< reservations >── showtimes >── movies >── movie_genres >── genres
@@ -161,6 +185,7 @@ users ──< reservations >── showtimes >── movies >── movie_genres
               │
               └── tickets (one per confirmed reservation)
 screens ──< showtimes
+media ── (entity_type + entity_id → posters, actor photos stored as BYTEA)
 ```
 
 Key integrity rules:
@@ -175,7 +200,7 @@ Key integrity rules:
 
 ## API overview
 
-Base URL: `http://localhost:8080` locally, `https://<app>.onrender.com` in production. Authenticated endpoints need `Authorization: Bearer <token>`.
+Base URL: `http://localhost:8080` locally, `https://cinemax-ghqe.onrender.com` in production. Authenticated endpoints need `Authorization: Bearer <token>`.
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
@@ -197,6 +222,7 @@ Base URL: `http://localhost:8080` locally, `https://<app>.onrender.com` in produ
 | GET | `/api/reservations/my` | Auth | User's bookings |
 | GET | `/api/tickets/{token}` | Public | Scan/validate (consumes once) |
 | GET | `/api/tickets/{token}/details` | Public | Non-consuming view |
+| GET | `/api/media/{type}/{id}/{subtype}` | Public | Serve media (BYTEA from DB) |
 | POST | `/api/admin/movies` | ADMIN | Create movie |
 | PUT/DELETE | `/api/admin/movies/{id}` | ADMIN | Update / delete movie |
 | POST | `/api/admin/movies/{id}/poster` | ADMIN | Upload poster |
@@ -235,9 +261,8 @@ Reference production setup: **Render.com** web service (Docker) + **Neon** manag
 | `SPRING_DATASOURCE_USERNAME` | DB user |
 | `SPRING_DATASOURCE_PASSWORD` | DB password |
 | `JWT_SECRET` | HS256 signing key (≥ 32 chars; generate with `openssl rand -base64 48`) |
-| `APP_UPLOAD_DIR` | Filesystem path for poster/actor uploads (default `file:uploads/`) |
 
-> Note: uploads live on the instance disk and are lost on redeploy — fine for demos; move them to object storage for production.
+> Note: Media (posters, actor photos) is stored as BYTEA in PostgreSQL — it survives redeploys and requires no external storage.
 
 **CI:** GitHub Actions (`.github/workflows/ci.yml`) runs the Maven package (which also compiles the React build) plus frontend build/lint on every push.
 
