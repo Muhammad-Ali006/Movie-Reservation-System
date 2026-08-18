@@ -105,7 +105,19 @@ public class TicketController {
             GROUP BY r.id, m.title, sc.name, s.show_date, s.show_time
         """;
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, reservationId);
-        return rows.isEmpty() ? null : rows.get(0);
+        if (!rows.isEmpty()) {
+            Map<String, Object> row = rows.get(0);
+            Object showDate = row.get("showDate");
+            if (showDate instanceof java.sql.Date sqlDate) {
+                row.put("showDate", sqlDate.toLocalDate().toString());
+            }
+            Object showTime = row.get("showTime");
+            if (showTime instanceof java.sql.Time sqlTime) {
+                row.put("showTime", sqlTime.toLocalTime().toString());
+            }
+            return row;
+        }
+        return null;
     }
 
     private LocalDateTime parseShowDateTime(Object dateObj, Object timeObj) {
