@@ -1,6 +1,6 @@
 # CINEMAX — Movie Reservation System
 
-A full-stack movie reservation platform built with **Spring Boot, React, and PostgreSQL**. Users browse movies, pick seats on an interactive grid, book with a two-minute seat-hold + mock-payment flow, and receive a QR-scannable digital ticket. Admins manage movies, genres, showtimes, bookings, and analytics — all from one polished dark-themed UI.
+A full stack movie reservation platform built with **Spring Boot, React, and PostgreSQL**. Users browse movies, pick seats on an interactive grid, book with a two minute seat-hold + mock payment flow, and receive a QR-scannable digital ticket. Admins manage movies, genres, showtimes, bookings, and analytics — all from one polished dark themed UI.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/Muhammad-Ali006/Movie-Reservation-System/actions/workflows/ci.yml/badge.svg)](https://github.com/Muhammad-Ali006/Movie-Reservation-System/actions/workflows/ci.yml)
@@ -17,6 +17,7 @@ A full-stack movie reservation platform built with **Spring Boot, React, and Pos
 - [Features](#features)
 - [Tech stack](#tech-stack)
 - [Quick start](#quick-start)
+- [User Interface](#user-interface)
 - [Project structure](#project-structure)
 - [Architecture](#architecture)
 - [Database schema](#database-schema)
@@ -31,50 +32,26 @@ A full-stack movie reservation platform built with **Spring Boot, React, and Pos
 
 ### For moviegoers
 
-- **Browse** movies with genre filters, sorting, and server-side pagination — Now Showing / Coming Soon / All Movies tabs
+- **Browse** movies with genre filters, sorting, and server side pagination — Now Showing / Coming Soon / All Movies tabs
 - **Rich movie pages** — poster, synopsis, cast with photos, metadata, and a date/time showtime picker
-- **Interactive seat map** — color-coded rows (available / held / booked) with a live legend
-- **2-minute seat hold + mock payment** — seats are reserved for you while you complete booking
+- **Interactive seat map** — color coded rows (available / held / booked) with a live legend
+- **2 minute seat hold + mock payment** — seats are reserved for you while you complete booking
 - **Change seats** and **cancel bookings** after purchase
-- **Digital tickets** — printable ticket with a **QR code** that venue staff scan to validate (single-use, no personal data in the scan response)
-- **Account page** with member-since date and role badge
+- **Digital tickets** — printable ticket with a **QR code** that venue staff scan to validate (single use, no personal data in the scan response)
+- **Account page** with member since date and role badge
 
 ### For admins
 
-- Full **movie CRUD** with poster upload, multi-genre tagging, and inline **cast management** (auto-creates actors, optional photos)
+- Full **movie CRUD** with poster upload, multi genre tagging, and inline **cast management** (auto creates actors, optional photos)
 - **Showtime management** — create/update/delete, auto seat generation from screen capacity, protected from edits while bookings exist
-- **Booking oversight** — searchable booking list, screen filter, per-booking and bulk cancel, read-only seat grid per showtime
+- **Booking oversight** — searchable booking list, screen filter, per booking and bulk cancel, read only seat grid per showtime
 - **Analytics dashboard** — total revenue, bookings, occupancy %, with **Revenue by Movie** and **Occupancy by Screen** charts
 
 ### Engineering
 
-- **JWT auth** with BCrypt password hashing, stateless sessions, and role-based access (`USER` / `ADMIN`)
-- **Race-safe bookings** — `SELECT … FOR UPDATE` + a partial unique index prevent double-booking at the database level
+- **JWT auth** with BCrypt password hashing, stateless sessions, and role based access (`USER` / `ADMIN`)
+- **Race safe bookings** — `SELECT … FOR UPDATE` + a partial unique index prevent double booking at the database level
 - Single deployable artifact: React is compiled and served by Spring Boot (SPA fallback routing built in)
-
----
-
-## Screenshots
-
-### User Flow
-
-| | |
-|---|---|
-| ![Homepage](screenshots/home.png) | ![Movie Listing](screenshots/movie-listing.png) |
-| **Homepage** — hero banner and trending rows | **Movie Listing** — tabs, filters, sorting, pagination |
-| ![Movie Detail](screenshots/movie-detail.png) | ![Seat Selection](screenshots/seat-selection.png) |
-| **Movie Detail** — metadata, synopsis, cast with photos | **Seat Selection** — interactive seat map with color legend |
-| ![Booking Confirmation](screenshots/booking-confirmation.png) | ![Digital Ticket](screenshots/ticket.png) |
-| **Booking Confirmation** — mock payment with countdown timer | **Digital Ticket** — printable ticket with QR code |
-| | ![My Bookings](screenshots/my-bookings.png) |
-| | **My Bookings** — reservation history with actions |
-
-### Admin Panel
-
-| | |
-|---|---|
-| ![Admin Dashboard](screenshots/admin-dashboard.png) | ![Admin Showtimes](screenshots/admin-showtimes.png) |
-| **Admin Dashboard** — revenue and occupancy analytics | **Admin Showtimes** — create, edit, delete showtimes |
 
 ---
 
@@ -83,7 +60,7 @@ A full-stack movie reservation platform built with **Spring Boot, React, and Pos
 | Layer        | Technology                                      |
 |--------------|-------------------------------------------------|
 | Backend      | Java 17, Spring Boot 4.0.7, Spring Security, Spring Data JDBC (`JdbcTemplate`), JJWT 0.12.6 |
-| Database     | PostgreSQL 18 (schema auto-created via `schema.sql`) |
+| Database     | PostgreSQL 18 (schema auto created via `schema.sql`) |
 | Frontend     | React 19, Vite 8, Tailwind CSS 4, React Router 7, Axios, Lenis, Recharts, qrcode, Lucide |
 | Tooling      | Maven (with `frontend-maven-plugin`), Docker, GitHub Actions |
 | Deployment   | Render.com (Docker) + Neon (managed PostgreSQL) |
@@ -123,22 +100,46 @@ cd frontend && npm install && npm run dev   # → http://localhost:5173
 
 ---
 
+## User Interface
+
+### User Flow
+
+| | |
+|---|---|
+| ![Homepage](User%20Interface/home.png) | ![Movie Listing](User%20Interface/movie-listing.png) |
+| **Homepage** — hero banner and trending rows | **Movie Listing** — tabs, filters, sorting, pagination |
+| ![Movie Detail](User%20Interface/movie-detail.png) | ![Seat Selection](User%20Interface/seat-selection.png) |
+| **Movie Detail** — metadata, synopsis, cast with photos | **Seat Selection** — interactive seat map with color legend |
+| ![Booking Confirmation](User%20Interface/booking-confirmation.png) | ![Digital Ticket](User%20Interface/ticket.png) |
+| **Booking Confirmation** — mock payment with countdown timer | **Digital Ticket** — printable ticket with QR code |
+| | ![My Bookings](User%20Interface/my-bookings.png) |
+| | **My Bookings** — reservation history with actions |
+
+### Admin Panel
+
+| | |
+|---|---|
+| ![Admin Dashboard](User%20Interface/admin-dashboard.png) | ![Admin Showtimes](User%20Interface/admin-showtimes.png) |
+| **Admin Dashboard** — revenue and occupancy analytics | **Admin Showtimes** — create, edit, delete showtimes |
+
+---
+
 ## Project structure
 
 ```
 movie-reservation/
 ├── src/main/java/com/movie/reservation/
-│   ├── config/        # Security, JWT filter, Web config, hold-expiry job, data seeder
+│   ├── config/        # Security, JWT filter, Web config, hold expiry job, data seeder
 │   ├── controller/    # REST controllers (public + admin)
 │   ├── dto/           # Request / response objects
 │   ├── exception/     # Global exception handler + typed exceptions
 │   ├── model/         # Domain models
-│   ├── repository/    # JdbcTemplate-based data access
+│   ├── repository/    # JdbcTemplate based data access
 │   ├── service/       # Business logic (auth)
 │   └── util/          # JWT utilities
 ├── src/main/resources/
-│   ├── schema.sql                       # Auto-created DB schema
-│   └── application.properties.example   # Env-var-driven configuration
+│   ├── schema.sql                       # Auto created DB schema
+│   └── application.properties.example   # Env var driven configuration
 ├── frontend/
 │   └── src/
 │       ├── pages/      # Route pages (Home, MovieListing, SeatSelection, …)
@@ -152,7 +153,7 @@ movie-reservation/
 
 ## Architecture
 
-A **single, self-contained service**: Spring Boot serves both the `/api/**` backend and the compiled React SPA from the same origin — so there's no CORS in production and exactly one Docker image to deploy.
+A **single, self contained service**: Spring Boot serves both the `/api/**` backend and the compiled React SPA from the same origin — so there's no CORS in production and exactly one Docker image to deploy.
 
 ```
 Browser (React SPA)
@@ -163,20 +164,20 @@ Spring Boot :8080
    ├─ SecurityConfig / JwtAuthFilter    stateless JWT auth, role checks
    ├─ Controllers → Services → Repositories (JdbcTemplate)
    ├─ HoldExpiryJob                     30s sweep of expired seat holds
-   └─ Static resources (index.html) / SpaForwardController  client-side routes
+   └─ Static resources (index.html) / SpaForwardController  client side routes
    ▼
 PostgreSQL (Neon / local)
 ```
 
 - **Layering:** `controller → service → repository`. Controllers translate HTTP, services hold business rules, repositories own the SQL via `JdbcTemplate`.
-- **Auth:** BCrypt-hashed passwords; login returns a signed JWT validated by `JwtAuthFilter` on every request. `/api/admin/**` requires `ROLE_ADMIN`. Errors are returned as JSON (400/401/403/404/500).
-- **Booking flow:** `POST /api/reservations` creates a `PENDING` hold (2-min `pending_until`, seats locked with `SELECT … FOR UPDATE`); `POST …/{id}/confirm` (mock payment) flips it to `CONFIRMED` and issues a ticket token; `HoldExpiryJob` releases expired holds automatically.
+- **Auth:** BCrypt hashed passwords; login returns a signed JWT validated by `JwtAuthFilter` on every request. `/api/admin/**` requires `ROLE_ADMIN`. Errors are returned as JSON (400/401/403/404/500).
+- **Booking flow:** `POST /api/reservations` creates a `PENDING` hold (2 min `pending_until`, seats locked with `SELECT … FOR UPDATE`); `POST …/{id}/confirm` (mock payment) flips it to `CONFIRMED` and issues a ticket token; `HoldExpiryJob` releases expired holds automatically.
 
 ---
 
 ## Database schema
 
-Twelve tables, auto-created from `schema.sql` (`IF NOT EXISTS`). The core relationships:
+Twelve tables, auto created from `schema.sql` (`IF NOT EXISTS`). The core relationships:
 
 ```
 users ──< reservations >── showtimes >── movies >── movie_genres >── genres
@@ -185,22 +186,22 @@ users ──< reservations >── showtimes >── movies >── movie_genres
               │
               └── tickets (one per confirmed reservation)
 screens ──< showtimes
-media ── (entity_type + entity_id → posters, actor photos stored as BYTEA)
+media ── (entity_type + entity_id = posters, actor photos stored as BYTEA)
 ```
 
 Key integrity rules:
 
-- **Anti-double-booking:** a partial unique index `uq_active_reservation_seat ON reservation_seats (seat_id) WHERE is_active` makes it structurally impossible for one seat to belong to two active reservations — enforced in addition to row locking.
+- **Anti double booking:** a partial unique index `uq_active_reservation_seat ON reservation_seats (seat_id) WHERE is_active` makes it structurally impossible for one seat to belong to two active reservations — enforced in addition to row locking.
 - **Hold expiry:** PENDING reservations past `pending_until` have their seats released and are marked `CANCELLED`.
 - **Deletion guards:** movies with confirmed bookings and showtimes with active bookings can't be deleted.
-- **Server-side money:** `total_amount` is always computed as `price_per_seat × seats` in the backend.
+- **Server side money:** `total_amount` is always computed as `price_per_seat × seats` in the backend.
 - **No enumeration:** movies use unique URL slugs, tickets use 32-byte random tokens.
 
 ---
 
 ## API overview
 
-Base URL: `http://localhost:8080` locally, `https://cinemax-ghqe.onrender.com` in production. Authenticated endpoints need `Authorization: Bearer <token>`.
+Base URL: `http://localhost:8080` locally, `https://cinemax-ghqe.onrender.com/` in production. Authenticated endpoints need `Authorization: Bearer <token>`.
 
 | Method | Endpoint | Access | Description |
 |--------|----------|--------|-------------|
@@ -215,13 +216,13 @@ Base URL: `http://localhost:8080` locally, `https://cinemax-ghqe.onrender.com` i
 | GET | `/api/showtimes?movieId=` | Public | Showtimes for a movie |
 | GET | `/api/showtimes/{id}` | Public | Showtime details |
 | GET | `/api/showtimes/{id}/seats` | Public | Seat layout + status |
-| POST | `/api/reservations` | Auth | Create a 2-min seat hold |
+| POST | `/api/reservations` | Auth | Create a 2 min seat hold |
 | POST | `/api/reservations/{id}/confirm` | Auth | Mock payment → confirmed + ticket |
 | PUT | `/api/reservations/{id}/cancel` | Auth | Cancel (releases seats) |
 | PUT | `/api/reservations/{id}/seats` | Auth | Change seats |
 | GET | `/api/reservations/my` | Auth | User's bookings |
 | GET | `/api/tickets/{token}` | Public | Scan/validate (consumes once) |
-| GET | `/api/tickets/{token}/details` | Public | Non-consuming view |
+| GET | `/api/tickets/{token}/details` | Public | Non consuming view |
 | GET | `/api/media/{type}/{id}/{subtype}` | Public | Serve media (BYTEA from DB) |
 | POST | `/api/admin/movies` | ADMIN | Create movie |
 | PUT/DELETE | `/api/admin/movies/{id}` | ADMIN | Update / delete movie |
@@ -273,7 +274,7 @@ Reference production setup: **Render.com** web service (Docker) + **Neon** manag
 - [x] Authentication (JWT + roles)
 - [x] Movie / genre / cast management
 - [x] Showtimes with auto seat generation
-- [x] Seat selection with 2-minute hold
+- [x] Seat selection with 2 minute hold
 - [x] Mock payment & booking confirmation
 - [x] Digital QR tickets with validation
 - [x] Admin analytics (revenue + occupancy)
