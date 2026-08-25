@@ -26,7 +26,7 @@ public class MovieController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllMovies(
-            @RequestParam(required = false) Long genreId,
+            @RequestParam(required = false) String genreIds,
             @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
             @RequestParam(required = false, defaultValue = "desc") String sortDir,
             @RequestParam(required = false) String availability,
@@ -40,13 +40,23 @@ public class MovieController {
             throw new IllegalArgumentException("Size must be between 1 and 100");
         }
 
+        List<Long> genreIdList = null;
+        if (genreIds != null && !genreIds.isBlank()) {
+            genreIdList = java.util.Arrays.stream(genreIds.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Long::parseLong)
+                    .toList();
+            if (genreIdList.isEmpty()) genreIdList = null;
+        }
+
         int offset = page * size;
 
         List<Movie> movies = movieRepository.findAllFiltered(
-                genreId, sortBy, sortDir, availability, offset, size);
+                genreIdList, sortBy, sortDir, availability, offset, size);
 
         int totalElements = movieRepository.countFiltered(
-                genreId, availability);
+                genreIdList, availability);
 
         int totalPages = (int) Math.ceil((double) totalElements / size);
 
