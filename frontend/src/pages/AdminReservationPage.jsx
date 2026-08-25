@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { CalendarX2, Loader2, AlertCircle, CheckCircle, Monitor, XCircle, LayoutGrid, ArrowLeft } from 'lucide-react'
 import api from '../utils/api'
@@ -69,6 +69,36 @@ function AdminReservationPage() {
       .finally(() => setSeatsLoading(false))
   }, [selectedShowtimeId])
 
+  const fetchSeats = useCallback(() => {
+    if (!selectedShowtimeId) return Promise.resolve()
+    return api.get(`/admin/showtimes/${selectedShowtimeId}/seats`)
+      .then(res => setSeats(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {})
+  }, [selectedShowtimeId])
+
+  const refreshReservations = useCallback(() => {
+    const params = selectedScreenId ? { screenId: selectedScreenId } : {}
+    return api.get('/admin/reservations', { params })
+      .then(res => setReservations(res.data))
+      .catch(() => {})
+  }, [selectedScreenId])
+
+  useEffect(() => {
+    if (!selectedShowtimeId) return
+    const interval = setInterval(() => {
+      fetchSeats()
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [selectedShowtimeId, fetchSeats])
+
+  useEffect(() => {
+    if (!selectedScreenId) return
+    const interval = setInterval(() => {
+      refreshReservations()
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [selectedScreenId, refreshReservations])
+
   const availableShows = [...new Map(
     showtimes.map(st => [st.movieId, { movieId: st.movieId, movieTitle: st.movieTitle }])
   ).values()]
@@ -118,10 +148,7 @@ function AdminReservationPage() {
   }
 
   const refreshSeats = () => {
-    if (!selectedShowtimeId) return
-    api.get(`/admin/showtimes/${selectedShowtimeId}/seats`)
-      .then(res => setSeats(Array.isArray(res.data) ? res.data : []))
-      .catch(() => {})
+    fetchSeats()
   }
 
   const handleSeatClick = async (seat) => {
@@ -135,7 +162,7 @@ function AdminReservationPage() {
       await api.put(`/reservations/${seat.reservationId}/cancel`)
       setMessage(`Booking for seat ${label} cancelled`)
       refreshSeats()
-      if (selectedScreenId) fetchReservations(selectedScreenId)
+      refreshReservations()
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to cancel')
     } finally {
@@ -156,7 +183,7 @@ function AdminReservationPage() {
       await api.put('/admin/reservations/bulk-cancel', ids)
       setMessage(`Cancelled ${ids.length} booking(s)`)
       refreshSeats()
-      if (selectedScreenId) fetchReservations(selectedScreenId)
+      refreshReservations()
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to cancel all')
     } finally {
@@ -246,7 +273,7 @@ function AdminReservationPage() {
         )}
 
         <button
-          onClick={() => fetchReservations(selectedScreenId || null)}
+          onClick={() => refreshReservations()}
           className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
           style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
         >
