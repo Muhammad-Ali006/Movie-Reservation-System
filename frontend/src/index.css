@@ -257,6 +257,24 @@ input:-webkit-autofill:focus {
 }
 
 /* ===================================================
+   FILTER RESULT TRANSITION
+   =================================================== */
+@keyframes grid-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.grid-transition {
+  animation: grid-fade-in 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-transition {
+    animation: none;
+  }
+}
+
+/* ===================================================
    SMOOTH BUTTON/LINK TRANSITIONS + PRESS EFFECT
    =================================================== */
 button, a {
