@@ -35,7 +35,7 @@ function AccountPage() {
   if (error) {
     return (
       <div className="max-w-2xl mx-auto px-6 py-8 pt-20">
-        <div className="flex items-center gap-2 p-3 rounded text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="flex items-center gap-2 p-3 rounded text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       </div>

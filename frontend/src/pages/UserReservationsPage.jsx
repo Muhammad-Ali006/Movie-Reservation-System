@@ -76,7 +76,10 @@ function UserReservationsPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8 pt-20">
-        <p style={{ color: 'var(--color-text-muted)' }}>Loading your bookings...</p>
+        <div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Loading your bookings...
+        </div>
       </div>
     )
   }
@@ -84,7 +87,7 @@ function UserReservationsPage() {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8 pt-20">
-        <div className="p-3 rounded text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="p-3 rounded text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           {error}
         </div>
       </div>
@@ -100,14 +103,14 @@ function UserReservationsPage() {
       <p className="mb-8" style={{ color: 'var(--color-text-muted)' }}>View and manage your movie reservations</p>
 
       {message && (
-        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6" style={{ backgroundColor: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-success)' }}>
+        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6 animate-slide-down" style={{ backgroundColor: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-success)' }}>
           <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
           {message}
         </div>
       )}
 
       {actionError && (
-        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6 animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {actionError}
         </div>

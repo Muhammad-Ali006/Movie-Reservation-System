@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Clock, Globe, Calendar, Clapperboard, Ticket, Monitor, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Clock, Globe, Calendar, Clapperboard, Ticket, Monitor, ChevronRight, Loader2 } from 'lucide-react'
 import api from '../utils/api'
 
 function MovieDetailPage() {
@@ -80,7 +80,10 @@ function MovieDetailPage() {
   if (loading) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-8 pt-20">
-        <p style={{ color: 'var(--color-text-muted)' }}>Loading movie details...</p>
+        <div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Loading movie details...
+        </div>
       </div>
     )
   }
@@ -91,7 +94,7 @@ function MovieDetailPage() {
         <Link to="/movies" className="flex items-center gap-1 text-sm mb-4 block" style={{ color: 'var(--color-accent)' }}>
           <ArrowLeft className="w-4 h-4" /> Back to Movies
         </Link>
-        <div className="p-3 rounded text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>{error}</div>
+        <div className="p-3 rounded text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>{error}</div>
       </div>
     )
   }

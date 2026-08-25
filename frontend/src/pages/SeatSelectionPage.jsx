@@ -119,7 +119,10 @@ function SeatSelectionPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8 pt-20">
-        <p style={{ color: 'var(--color-text-muted)' }}>Loading seat layout...</p>
+        <div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Loading seat layout...
+        </div>
       </div>
     )
   }
@@ -127,7 +130,7 @@ function SeatSelectionPage() {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-8 pt-20">
-        <div className="p-3 rounded text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="p-3 rounded text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           {error}
         </div>
       </div>
@@ -213,14 +216,14 @@ function SeatSelectionPage() {
         </div>
 
         {submitError && (
-          <div className="flex items-center gap-2 p-3 rounded text-sm mb-4" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+          <div className="flex items-center gap-2 p-3 rounded text-sm mb-4 animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {submitError}
           </div>
         )}
 
         {stolenSeats.length > 0 && (
-          <div className="flex items-center gap-2 p-3 rounded text-sm mb-4" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+          <div className="flex items-center gap-2 p-3 rounded text-sm mb-4 animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {stolenSeats.map(s => `${s.rowLabel}${s.seatNumber}`).join(', ')} {stolenSeats.length > 1 ? 'were' : 'was'} taken by another user. Please select different seats.
           </div>

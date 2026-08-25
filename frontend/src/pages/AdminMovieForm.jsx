@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
 import api from '../utils/api'
 
 function AdminMovieForm() {
@@ -164,7 +164,7 @@ function AdminMovieForm() {
     }
   }
 
-  if (loading) return <div className="max-w-3xl mx-auto px-6 py-8 pt-20"><p style={{ color: 'var(--color-text-muted)' }}>Loading...</p></div>
+  if (loading) return <div className="max-w-3xl mx-auto px-6 py-8 pt-20"><div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}><Loader2 className="w-5 h-5 animate-spin" /> Loading...</div></div>
 
   const inputStyle = { border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }
   const labelStyle = { color: 'var(--color-text-secondary)' }
@@ -186,7 +186,7 @@ function AdminMovieForm() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           <AlertCircle className="w-4 h-4" /> {error}
         </div>
       )}
@@ -279,7 +279,7 @@ function AdminMovieForm() {
               )}
             </div>
             {!isEditing && posterFile && <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>Poster will be uploaded after creating the movie.</p>}
-            {posterError && <div className="flex items-center gap-1 p-2 rounded mt-2 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}><AlertCircle className="w-4 h-4" /> {posterError}</div>}
+            {posterError && <div className="flex items-center gap-1 p-2 rounded mt-2 text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}><AlertCircle className="w-4 h-4" /> {posterError}</div>}
           </div>
         </div>
       )}
@@ -288,7 +288,7 @@ function AdminMovieForm() {
         <div className="mt-8 rounded-lg p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
           <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Cast</h2>
           {castError && (
-            <div className="flex items-center gap-1 p-2 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+            <div className="flex items-center gap-1 p-2 rounded mb-4 text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
               <AlertCircle className="w-4 h-4" /> {castError}
             </div>
           )}

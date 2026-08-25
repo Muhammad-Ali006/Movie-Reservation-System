@@ -326,14 +326,14 @@ function AdminReservationPage() {
       )}
 
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6 animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
         </div>
       )}
 
       {message && (
-        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6" style={{ backgroundColor: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-success)' }}>
+        <div className="flex items-center gap-2 p-3 rounded text-sm mb-6 animate-slide-down" style={{ backgroundColor: 'rgba(34, 197, 94, 0.12)', color: 'var(--color-success)' }}>
           <CheckCircle className="w-4 h-4 flex-shrink-0" />
           {message}
         </div>
@@ -377,7 +377,7 @@ function AdminReservationPage() {
           </div>
 
           {seatsError && (
-            <div className="flex items-center gap-2 p-3 rounded text-sm mb-4" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+            <div className="flex items-center gap-2 p-3 rounded text-sm mb-4 animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {seatsError}
             </div>

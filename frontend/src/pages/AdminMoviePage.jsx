@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Plus, AlertCircle, Loader2 } from 'lucide-react'
 import api from '../utils/api'
 
 function AdminMoviePage() {
@@ -59,18 +59,21 @@ function AdminMoviePage() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           <AlertCircle className="w-4 h-4" /> {error}
         </div>
       )}
       {deleteError && (
-        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+        <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
           <AlertCircle className="w-4 h-4" /> {deleteError}
         </div>
       )}
 
       {loading ? (
-        <p style={{ color: 'var(--color-text-muted)' }}>Loading movies...</p>
+        <div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Loading movies...
+        </div>
       ) : movies.length === 0 ? (
         <p style={{ color: 'var(--color-text-muted)' }}>No movies found.</p>
       ) : (
