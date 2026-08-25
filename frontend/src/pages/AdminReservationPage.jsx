@@ -1,7 +1,123 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarX2, Loader2, AlertCircle, CheckCircle, Monitor, XCircle, LayoutGrid, ArrowLeft } from 'lucide-react'
+import { CalendarX2, Loader2, AlertCircle, CheckCircle, Monitor, XCircle, ArrowLeft, Search } from 'lucide-react'
 import api from '../utils/api'
+
+function SearchableSelect({ items, value, onChange, placeholder, disabled }) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef(null)
+  const inputRef = useRef(null)
+
+  const selected = items.find(it => String(it.id) === String(value))
+
+  const filtered = query.trim()
+    ? items.filter(it => it.label.toLowerCase().includes(query.toLowerCase()))
+    : items
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelect = (id) => {
+    onChange(id)
+    setQuery('')
+    setOpen(false)
+  }
+
+  const handleClear = (e) => {
+    e.stopPropagation()
+    onChange('')
+    setQuery('')
+    inputRef.current?.focus()
+  }
+
+  const handleFocus = () => {
+    if (disabled) return
+    setOpen(true)
+    setQuery('')
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div
+        className="relative flex items-center"
+        style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+        onClick={() => { if (!disabled) { setOpen(true); inputRef.current?.focus() } }}
+      >
+        <Search className="w-4 h-4 absolute left-3 pointer-events-none" style={{ color: disabled ? 'var(--color-border)' : 'var(--color-text-muted)' }} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={open ? query : (selected ? selected.label : '')}
+          onChange={e => { setQuery(e.target.value); setOpen(true) }}
+          onFocus={handleFocus}
+          placeholder={selected && !open ? selected.label : (placeholder || 'Search or select...')}
+          readOnly={!open && !!selected}
+          disabled={disabled}
+          className="w-full pl-10 pr-9 py-2 rounded-lg text-sm"
+          style={{
+            backgroundColor: disabled ? 'var(--color-border)' : 'var(--color-surface)',
+            color: 'var(--color-text)',
+            border: '1px solid var(--color-border)',
+            cursor: disabled ? 'not-allowed' : 'text',
+            opacity: disabled ? 0.6 : 1,
+          }}
+        />
+        {(value || query) && !disabled && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-3 transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
+          >
+            <XCircle className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {open && !disabled && (
+        <div
+          className="absolute z-50 w-full mt-1 rounded-lg max-h-56 overflow-auto animate-slide-down"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+          {filtered.length === 0 ? (
+            <p className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+              No results found
+            </p>
+          ) : (
+            filtered.map(it => (
+              <button
+                key={it.id}
+                type="button"
+                onClick={() => handleSelect(it.id)}
+                className="w-full text-left px-4 py-2.5 text-sm transition-all"
+                style={{
+                  color: String(it.id) === String(value) ? 'var(--color-primary)' : 'var(--color-text)',
+                  backgroundColor: String(it.id) === String(value) ? 'rgba(229, 9, 20, 0.08)' : 'transparent',
+                  fontWeight: String(it.id) === String(value) ? 600 : 400,
+                }}
+                onMouseEnter={e => { if (String(it.id) !== String(value)) e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)' }}
+                onMouseLeave={e => { if (String(it.id) !== String(value)) e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                {it.label}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function AdminReservationPage() {
   const [screens, setScreens] = useState([])
@@ -283,42 +399,26 @@ function AdminReservationPage() {
 
       {selectedScreenId && (
         <div className="flex items-center gap-3 mb-6 flex-wrap">
-          <div className="relative flex-1 max-w-xs">
-            <LayoutGrid className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
-            <select
+          <div className="flex-1 max-w-xs">
+            <SearchableSelect
+              items={availableShows.map(m => ({ id: m.movieId, label: m.movieTitle }))}
               value={selectedMovieId}
-              onChange={e => { setSelectedMovieId(e.target.value); setSelectedShowtimeId('') }}
-              className="w-full pl-10 pr-4 py-2 rounded-lg text-sm appearance-none cursor-pointer"
-              style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
-            >
-              <option value="">Select a show...</option>
-              {availableShows.map(m => (
-                <option key={m.movieId} value={m.movieId}>{m.movieTitle}</option>
-              ))}
-            </select>
+              onChange={id => { setSelectedMovieId(id); setSelectedShowtimeId('') }}
+              placeholder="Select a show..."
+            />
           </div>
 
-          <div className="relative flex-1 max-w-xs">
-            <Monitor className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
-            <select
+          <div className="flex-1 max-w-xs">
+            <SearchableSelect
+              items={availableTimes.map(st => ({
+                id: st.id,
+                label: `${formatDate(st.showDate)} · ${formatTime(st.showTime)} · ${st.screenName}`,
+              }))}
               value={selectedShowtimeId}
-              onChange={e => setSelectedShowtimeId(e.target.value)}
+              onChange={setSelectedShowtimeId}
+              placeholder="Select a time..."
               disabled={!selectedMovieId}
-              className="w-full pl-10 pr-4 py-2 rounded-lg text-sm appearance-none cursor-pointer"
-              style={{
-                backgroundColor: selectedMovieId ? 'var(--color-surface)' : 'var(--color-border)',
-                color: 'var(--color-text)',
-                border: '1px solid var(--color-border)',
-                cursor: selectedMovieId ? 'pointer' : 'not-allowed',
-              }}
-            >
-              <option value="">Select a time...</option>
-              {availableTimes.map(st => (
-                <option key={st.id} value={st.id}>
-                  {formatDate(st.showDate)} · {formatTime(st.showTime)} · {st.screenName}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {showtimesLoading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--color-text-muted)' }} />}
