@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Clock, Globe, Calendar, Clapperboard, Ticket, Monitor, ChevronRight } from 'lucide-react'
 import api from '../utils/api'
@@ -14,33 +14,44 @@ function MovieDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [movieRes, genresRes] = await Promise.all([
-          api.get(`/movies/${slug}`),
-          api.get('/genres'),
-        ])
-        setMovie(movieRes.data.movie)
-        setCast(movieRes.data.cast)
-        setGenreIds(movieRes.data.genreIds || [])
-        setGenres(genresRes.data)
+  const fetchData = useCallback(async () => {
+    try {
+      const [movieRes, genresRes] = await Promise.all([
+        api.get(`/movies/${slug}`),
+        api.get('/genres'),
+      ])
+      setMovie(movieRes.data.movie)
+      setCast(movieRes.data.cast)
+      setGenreIds(movieRes.data.genreIds || [])
+      setGenres(genresRes.data)
 
-        const showRes = await api.get('/showtimes', { params: { movieId: movieRes.data.movie.id } })
-        setShowtimes(showRes.data)
+      const showRes = await api.get('/showtimes', { params: { movieId: movieRes.data.movie.id } })
+      setShowtimes(showRes.data)
 
-        if (showRes.data.length > 0) {
-          const dates = [...new Set(showRes.data.map(s => s.showDate))].sort()
-          setSelectedDate(dates[0])
-        }
-      } catch {
-        setError('Failed to load movie details')
-      } finally {
-        setLoading(false)
+      if (showRes.data.length > 0 && !selectedDate) {
+        const dates = [...new Set(showRes.data.map(s => s.showDate))].sort()
+        setSelectedDate(dates[0])
       }
+    } catch {
+      setError('Failed to load movie details')
+    } finally {
+      setLoading(false)
     }
+  }, [slug, selectedDate])
+
+  useEffect(() => {
     fetchData()
-  }, [slug])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (loading) return
+    const interval = setInterval(() => {
+      api.get('/showtimes', { params: { movieId: movie?.id } })
+        .then(res => setShowtimes(res.data))
+        .catch(() => {})
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [loading, movie?.id])
 
   const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
   const movieGenres = genreIds.map(gid => genreMap[gid]).filter(Boolean)
