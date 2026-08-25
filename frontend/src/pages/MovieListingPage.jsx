@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Clock, ChevronLeft, ChevronRight, Film, Search, X, ChevronDown } from 'lucide-react'
+import { Clock, ChevronLeft, ChevronRight, Film, Search, X, ChevronDown, Loader2 } from 'lucide-react'
 import api from '../utils/api'
 
 const TABS = [
@@ -244,7 +244,7 @@ function MovieListingPage() {
 
             {/* Expandable genre chips */}
             {genreFilterOpen && (
-              <div className="flex flex-wrap justify-center gap-2 max-w-3xl">
+              <div className="flex flex-wrap justify-center gap-2 max-w-3xl animate-slide-down">
                 {genres.map(g => (
                   <button
                     key={g.id}
@@ -265,7 +265,10 @@ function MovieListingPage() {
 
         {/* Movie Grid */}
         {loading || searchLoading ? (
-          <p className="text-center" style={{ color: 'var(--color-text-muted)' }}>Loading movies...</p>
+          <div className="flex items-center justify-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Loading movies...
+          </div>
         ) : isSearching ? (
           filteredMovies.length === 0 ? (
             <p className="text-center" style={{ color: 'var(--color-text-muted)' }}>

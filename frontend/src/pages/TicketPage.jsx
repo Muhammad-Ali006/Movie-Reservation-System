@@ -12,6 +12,7 @@ import {
   MonitorPlay,
   Armchair,
   Banknote,
+  Loader2,
 } from 'lucide-react'
 import api from '../utils/api'
 
@@ -57,7 +58,10 @@ function TicketPage() {
   if (loading) {
     return (
       <div className="max-w-lg mx-auto px-6 py-8 pt-20">
-        <p style={{ color: 'var(--color-text-muted)' }}>Loading ticket...</p>
+        <div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Loading ticket...
+        </div>
       </div>
     )
   }
@@ -173,7 +177,7 @@ function TicketPage() {
 
           <div className="rounded-lg p-4 flex flex-col items-center" style={{ backgroundColor: 'var(--color-bg)' }}>
             {qrDataUrl ? (
-              <img src={qrDataUrl} alt="Ticket QR code" className="w-44 h-44" />
+              <img src={qrDataUrl} alt="Ticket QR code" className="w-44 h-44 animate-scale-pop" />
             ) : (
               <div className="w-44 h-44 flex items-center justify-center" style={{ color: 'var(--color-text-muted)' }}>
                 Loading QR...
