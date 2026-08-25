@@ -1,7 +1,135 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarClock, Loader2, CheckCircle, AlertCircle, Pencil, Trash2, Monitor, X, ArrowLeft } from 'lucide-react'
+import { CalendarClock, Loader2, CheckCircle, AlertCircle, Pencil, Trash2, X, ArrowLeft, Search } from 'lucide-react'
 import api from '../utils/api'
+
+function SearchableMovieSelect({ movies, value, onChange, placeholder, showAllOption }) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef(null)
+  const inputRef = useRef(null)
+
+  const selected = movies.find(m => String(m.id) === String(value))
+
+  const filtered = query.trim()
+    ? movies.filter(m => m.title.toLowerCase().includes(query.toLowerCase()))
+    : movies
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelect = (id) => {
+    onChange(id)
+    setQuery('')
+    setOpen(false)
+  }
+
+  const handleClear = (e) => {
+    e.stopPropagation()
+    onChange('')
+    setQuery('')
+    inputRef.current?.focus()
+  }
+
+  const handleFocus = () => {
+    setOpen(true)
+    setQuery('')
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div
+        className="relative flex items-center cursor-pointer"
+        onClick={() => { setOpen(true); inputRef.current?.focus() }}
+      >
+        <Search className="w-4 h-4 absolute left-3 pointer-events-none" style={{ color: 'var(--color-text-muted)' }} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={open ? query : (selected ? selected.title : '')}
+          onChange={e => { setQuery(e.target.value); setOpen(true) }}
+          onFocus={handleFocus}
+          placeholder={selected && !open ? selected.title : (placeholder || 'Search or select a movie...')}
+          readOnly={!open && !!selected}
+          className="w-full pl-10 pr-9 py-2.5 rounded-lg text-sm"
+          style={{
+            backgroundColor: 'var(--color-bg)',
+            color: 'var(--color-text)',
+            border: '1px solid var(--color-border)',
+            cursor: 'text',
+          }}
+        />
+        {(value || query) && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-3 transition-colors"
+            style={{ color: 'var(--color-text-muted)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--color-text)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--color-text-muted)'}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {open && (
+        <div
+          className="absolute z-50 w-full mt-1 rounded-lg max-h-56 overflow-auto animate-slide-down"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+          {showAllOption && (
+            <button
+              type="button"
+              onClick={() => handleSelect('')}
+              className="w-full text-left px-4 py-2.5 text-sm transition-all"
+              style={{
+                color: !value ? 'var(--color-primary)' : 'var(--color-text)',
+                backgroundColor: !value ? 'rgba(229, 9, 20, 0.08)' : 'transparent',
+                fontWeight: !value ? 600 : 400,
+              }}
+              onMouseEnter={e => { if (value) e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)' }}
+              onMouseLeave={e => { if (value) e.currentTarget.style.backgroundColor = 'transparent' }}
+            >
+              All Movies
+            </button>
+          )}
+          {filtered.length === 0 ? (
+            <p className="px-4 py-3 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+              No movies found
+            </p>
+          ) : (
+            filtered.map(m => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => handleSelect(String(m.id))}
+                className="w-full text-left px-4 py-2.5 text-sm transition-all"
+                style={{
+                  color: String(m.id) === String(value) ? 'var(--color-primary)' : 'var(--color-text)',
+                  backgroundColor: String(m.id) === String(value) ? 'rgba(229, 9, 20, 0.08)' : 'transparent',
+                  fontWeight: String(m.id) === String(value) ? 600 : 400,
+                }}
+                onMouseEnter={e => { if (String(m.id) !== String(value)) e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)' }}
+                onMouseLeave={e => { if (String(m.id) !== String(value)) e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                {m.title}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function AdminShowtimePage() {
   const [movies, setMovies] = useState([])
@@ -66,6 +194,8 @@ function AdminShowtimePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!movieId) { setError('Please select a movie'); return }
+    if (!screenId) { setError('Please select a screen'); return }
     setSubmitting(true)
     setError('')
     setMessage('')
@@ -194,23 +324,12 @@ function AdminShowtimePage() {
 
         <div>
           <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text-secondary)' }}>Movie</label>
-          <select
+          <SearchableMovieSelect
+            movies={movies}
             value={movieId}
-            onChange={e => setMovieId(e.target.value)}
-            required
-            className="w-full px-3 py-2.5 rounded-lg text-sm"
-            style={{
-              backgroundColor: 'var(--color-bg)',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="">Select a movie</option>
-            {movies.map(m => (
-              <option key={m.id} value={m.id}>{m.title}</option>
-            ))}
-          </select>
+            onChange={setMovieId}
+            placeholder="Search or select a movie..."
+          />
         </div>
 
         <div>
@@ -291,21 +410,16 @@ function AdminShowtimePage() {
         </button>
       </form>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-4">
         <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>All Showtimes</h2>
-        <div className="relative flex-1 max-w-xs">
-          <Monitor className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
-          <select
+        <div className="flex-1 max-w-xs">
+          <SearchableMovieSelect
+            movies={movies}
             value={movieFilter}
-            onChange={e => setMovieFilter(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg text-sm appearance-none cursor-pointer"
-            style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', border: '1px solid var(--color-border)' }}
-          >
-            <option value="">All Movies</option>
-            {movies.map(m => (
-              <option key={m.id} value={m.id}>{m.title}</option>
-            ))}
-          </select>
+            onChange={setMovieFilter}
+            placeholder="All Movies"
+            showAllOption
+          />
         </div>
       </div>
 
