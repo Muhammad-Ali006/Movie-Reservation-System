@@ -143,7 +143,10 @@ function BookingConfirmationPage() {
   if (loading) {
     return (
       <div className="max-w-lg mx-auto px-6 py-8 pt-20">
-        <p style={{ color: 'var(--color-text-muted)' }}>Loading booking details...</p>
+        <div className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          Loading booking details...
+        </div>
       </div>
     )
   }
@@ -184,8 +187,8 @@ function BookingConfirmationPage() {
   if (confirmed && !cancelled) {
     return (
       <div className="max-w-lg mx-auto px-6 py-8 pt-20">
-        <div className="rounded-lg p-6 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-          <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-success)' }} />
+        <div className="rounded-lg p-6 text-center animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+          <CheckCircle className="w-12 h-12 mx-auto mb-4 animate-scale-pop" style={{ color: 'var(--color-success)' }} />
           <h2 className="text-xl font-semibold mb-2">Booking Confirmed!</h2>
           <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
             Your reservation has been confirmed successfully.
@@ -284,7 +287,7 @@ function BookingConfirmationPage() {
   if (cancelled) {
     return (
       <div className="max-w-lg mx-auto px-6 py-8 pt-20">
-        <div className="rounded-lg p-6 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-lg p-6 text-center animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
           <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-warning)' }} />
           <h2 className="text-xl font-semibold mb-2">Reservation Cancelled</h2>
           <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
@@ -306,7 +309,7 @@ function BookingConfirmationPage() {
     const total = hold.seatIds.length * parseFloat(showtime?.pricePerSeat || 0)
     return (
       <div className="max-w-lg mx-auto px-6 py-8 pt-20">
-        <div className="rounded-lg p-6 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-lg p-6 text-center animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
           <Clock className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-warning)' }} />
           <h2 className="text-xl font-semibold mb-2">Seats Held!</h2>
           <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
@@ -337,7 +340,7 @@ function BookingConfirmationPage() {
           </div>
 
           {payError && (
-            <div className="flex items-center gap-2 p-3 rounded text-sm mb-4" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+            <div className="flex items-center gap-2 p-3 rounded text-sm mb-4 animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {payError}
             </div>
@@ -384,7 +387,7 @@ function BookingConfirmationPage() {
   if (expired) {
     return (
       <div className="max-w-lg mx-auto px-6 py-8 pt-20">
-        <div className="rounded-lg p-6 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-lg p-6 text-center animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
           <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-warning)' }} />
           <h2 className="text-xl font-semibold mb-2">Hold Expired</h2>
           <p className="text-sm mb-6" style={{ color: 'var(--color-text-secondary)' }}>
@@ -414,7 +417,7 @@ function BookingConfirmationPage() {
         <ArrowLeft className="w-4 h-4" /> Back to Seat Selection
       </Link>
 
-      <div className="rounded-lg p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+      <div className="rounded-lg p-6 animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
         <h2 className="text-xl font-semibold mb-6">Confirm Your Booking</h2>
 
         {showtime && (
@@ -471,8 +474,8 @@ function BookingConfirmationPage() {
           </div>
         </div>
 
-        {holdError && (
-          <div className="flex items-center gap-2 p-3 rounded text-sm mb-4" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+          {holdError && (
+            <div className="flex items-center gap-2 p-3 rounded text-sm mb-4 animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {holdError}
           </div>

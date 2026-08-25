@@ -41,11 +41,11 @@ function Signup() {
 
   return (
     <div className="max-w-md mx-auto pt-24 px-6">
-      <div className="rounded-lg p-8" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+      <div className="rounded-lg p-8 animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
         <h2 className="text-2xl font-bold text-center mb-6" style={{ color: 'var(--color-text)' }}>Sign Up</h2>
 
         {error && (
-          <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+          <div className="flex items-center gap-2 p-3 rounded mb-4 text-sm animate-slide-down" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
           </div>
