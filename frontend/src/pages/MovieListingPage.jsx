@@ -152,18 +152,19 @@ function MovieListingPage() {
         <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>Browse Movies</h1>
 
           {/* Search Bar */}
-          <div className="relative mb-6">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
+          <div className="relative mb-6 max-w-md mx-auto">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
             <input
               type="text"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder="Search movies by title, director, or actor..."
-              className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm"
+              placeholder="Search by title, director, or actor..."
+              className="w-full pl-11 pr-10 py-2.5 text-sm"
               style={{
                 backgroundColor: 'var(--color-surface)',
                 color: 'var(--color-text)',
                 border: '1px solid var(--color-border)',
+                borderRadius: '9999px',
               }}
             />
             {searchQuery && (
@@ -243,12 +244,12 @@ function MovieListingPage() {
               Found {filteredMovies.length} movie{filteredMovies.length !== 1 ? 's' : ''} for "{searchQuery}"
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredMovies.map(movie => (
+              {filteredMovies.map((movie, index) => (
                 <Link
                   key={movie.id}
                   to={`/movies/${movie.slug}`}
-                  className="rounded-lg overflow-hidden transition-all relative"
-                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                  className="search-result-card rounded-lg overflow-hidden transition-all relative"
+                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', animationDelay: `${index * 50}ms` }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-light)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                   <span
