@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Clock, Filter, ChevronLeft, ChevronRight, Film } from 'lucide-react'
+import { Clock, Filter, ChevronLeft, ChevronRight, Film, Search, X } from 'lucide-react'
 import api from '../utils/api'
 
 const TABS = [
@@ -26,6 +26,9 @@ function MovieListingPage() {
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [allMovies, setAllMovies] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
 
   const fetchMovies = useCallback(async () => {
     setLoading(true)
@@ -54,9 +57,50 @@ function MovieListingPage() {
     }
   }, [page, sortBy, sortDir, activeTab, selectedGenre, genres.length])
 
+  const fetchAllMovies = useCallback(async () => {
+    if (allMovies.length > 0) return
+    setSearchLoading(true)
+    try {
+      const res = await api.get('/movies', { params: { size: 100, sortBy: 'title', sortDir: 'asc' } })
+      setAllMovies(res.data.content || [])
+    } catch {
+      setAllMovies([])
+    } finally {
+      setSearchLoading(false)
+    }
+  }, [allMovies.length])
+
   useEffect(() => {
-    fetchMovies()
-  }, [fetchMovies])
+    if (searchQuery.trim()) {
+      fetchAllMovies()
+    }
+  }, [searchQuery, fetchAllMovies])
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      fetchMovies()
+    }
+  }, [fetchMovies, searchQuery])
+
+  const filteredMovies = searchQuery.trim()
+    ? allMovies.filter(movie => {
+        const q = searchQuery.toLowerCase()
+        const titleMatch = movie.title?.toLowerCase().includes(q)
+        const directorMatch = movie.director?.toLowerCase().includes(q)
+        const actorMatch = movie.actorNames?.some(name => name.toLowerCase().includes(q))
+        return titleMatch || directorMatch || actorMatch
+      })
+    : movies
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
+    setPage(0)
+  }
+
+  const clearSearch = () => {
+    setSearchQuery('')
+    setPage(0)
+  }
 
   const handleTabChange = (tab) => {
     setActiveTab(tab)
@@ -79,6 +123,8 @@ function MovieListingPage() {
   }
 
   const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
+
+  const isSearching = searchQuery.trim().length > 0
 
   return (
     <div className="relative min-h-screen">
@@ -105,7 +151,33 @@ function MovieListingPage() {
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 pt-20">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6" style={{ color: 'var(--color-text)' }}>Browse Movies</h1>
 
+          {/* Search Bar */}
+          <div className="relative mb-6">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--color-text-muted)' }} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search movies by title, director, or actor..."
+              className="w-full pl-10 pr-10 py-2.5 rounded-lg text-sm"
+              style={{
+                backgroundColor: 'var(--color-surface)',
+                color: 'var(--color-text)',
+                border: '1px solid var(--color-border)',
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--color-text-muted)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
           {/* Tabs */}
+          {!isSearching && (
           <div className="flex gap-1 mb-6 p-1 rounded-lg w-fit" style={{ backgroundColor: 'var(--color-surface)' }}>
             {TABS.map(tab => (
               <button
@@ -120,8 +192,10 @@ function MovieListingPage() {
               </button>
             ))}
           </div>
+          )}
 
           {/* Filters Row */}
+          {!isSearching && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4" style={{ color: 'var(--color-text-muted)' }} />
@@ -153,10 +227,73 @@ function MovieListingPage() {
               ))}
             </div>
           </div>
+          )}
 
       {/* Movie Grid */}
-      {loading ? (
+      {loading || searchLoading ? (
         <p style={{ color: 'var(--color-text-muted)' }}>Loading movies...</p>
+      ) : isSearching ? (
+        filteredMovies.length === 0 ? (
+          <p style={{ color: 'var(--color-text-muted)' }}>
+            No movies found for "{searchQuery}".
+          </p>
+        ) : (
+          <>
+            <p className="text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>
+              Found {filteredMovies.length} movie{filteredMovies.length !== 1 ? 's' : ''} for "{searchQuery}"
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredMovies.map(movie => (
+                <Link
+                  key={movie.id}
+                  to={`/movies/${movie.slug}`}
+                  className="rounded-lg overflow-hidden transition-all relative"
+                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-light)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                  <span
+                    className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full z-10"
+                    style={{
+                      backgroundColor: movie.hasShowtimes ? 'var(--color-primary)' : 'var(--color-bg)',
+                      color: movie.hasShowtimes ? '#fff' : 'var(--color-text-muted)',
+                      border: movie.hasShowtimes ? 'none' : '1px solid var(--color-border)',
+                    }}>
+                    {movie.hasShowtimes ? 'NOW SHOWING' : 'COMING SOON'}
+                  </span>
+                  {movie.posterUrl ? (
+                    <img src={movie.posterUrl} alt={movie.title} className="w-full h-64 object-cover" />
+                  ) : (
+                    <div className="w-full h-64 flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
+                      <Film className="w-10 h-10" style={{ color: 'var(--color-text-muted)' }} />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <h2 className="text-lg font-semibold mb-1 truncate" style={{ color: 'var(--color-text)' }}>
+                      {movie.title}
+                    </h2>
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {movie.genreIds?.slice(0, 2).map((gid, index) => (
+                        <span
+                          key={index}
+                          className="text-xs px-2 py-0.5 rounded-full"
+                          style={{ backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>
+                          {genreMap[gid] || 'Unknown'}
+                        </span>
+                      ))}
+                      {movie.genreIds?.length > 2 && (
+                        <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>+{movie.genreIds.length - 2}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                      <Clock className="w-3 h-3" />
+                      {movie.durationMinutes} min
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )
       ) : movies.length === 0 ? (
         <p style={{ color: 'var(--color-text-muted)' }}>
           {activeTab === 'NOW_SHOWING'
@@ -222,7 +359,7 @@ function MovieListingPage() {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {!isSearching && totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-8">
           <button
             onClick={() => setPage(p => Math.max(0, p - 1))}
