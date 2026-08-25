@@ -4,9 +4,9 @@ import { SearchX, ArrowLeft, Film } from 'lucide-react'
 function NotFoundPage({ title = 'Page Not Found', message = "The page you're looking for doesn't exist or has been moved." }) {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-6 pt-20">
-      <div className="text-center max-w-md">
+      <div className="text-center max-w-md animate-fade-in">
         <div
-          className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6"
+          className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 animate-scale-pop"
           style={{ backgroundColor: 'var(--color-accent-light)' }}
         >
           <SearchX className="w-10 h-10" style={{ color: 'var(--color-accent)' }} />
