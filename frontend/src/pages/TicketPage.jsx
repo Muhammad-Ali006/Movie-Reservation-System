@@ -197,6 +197,8 @@ function TicketPage() {
         onClick={() => window.print()}
         className="no-print w-full mt-6 flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold transition-all"
         style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}
+        onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
       >
         <Printer className="w-4 h-4" /> Print Ticket
       </button>

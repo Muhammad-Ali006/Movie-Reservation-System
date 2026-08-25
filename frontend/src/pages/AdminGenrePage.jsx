@@ -112,7 +112,7 @@ function AdminGenrePage() {
       )}
 
       {showForm && (
-        <div className="rounded-lg p-6 mb-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-lg p-6 mb-6 animate-slide-down" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
           <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
             {editingGenre ? 'Edit Genre' : 'Add Genre'}
           </h2>
@@ -138,12 +138,16 @@ function AdminGenrePage() {
             </div>
             <div className="flex gap-2">
               <button type="submit" disabled={formLoading}
-                className="text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-                style={{ backgroundColor: 'var(--color-primary)' }}>
+                className="text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-all"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                 {formLoading ? 'Saving...' : editingGenre ? 'Update Genre' : 'Create Genre'}
               </button>
               <button type="button" onClick={closeForm}
-                className="px-4 py-2 rounded-lg text-sm" style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
+                className="px-4 py-2 rounded-lg text-sm transition-all" style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                 Cancel
               </button>
             </div>

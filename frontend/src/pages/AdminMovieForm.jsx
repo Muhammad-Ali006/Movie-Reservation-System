@@ -245,13 +245,17 @@ function AdminMovieForm() {
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={saving}
-              className="text-white px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-              style={{ backgroundColor: 'var(--color-primary)' }}>
+              className="text-white px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-all"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
               {saving ? 'Saving...' : isEditing ? 'Update Movie' : 'Create Movie'}
             </button>
             <Link to="/admin/movies"
-              className="px-6 py-2 rounded-lg text-sm inline-flex items-center"
-              style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}>
+              className="px-6 py-2 rounded-lg text-sm inline-flex items-center transition-all"
+              style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-secondary)' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-surface)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
               Cancel
             </Link>
           </div>
@@ -346,8 +350,10 @@ function AdminMovieForm() {
                 {castPhotoFile && <span className="text-sm ml-2" style={{ color: 'var(--color-text-muted)' }}>{castPhotoFile.name}</span>}
               </div>
               <button type="submit" disabled={addingCast}
-                className="text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 whitespace-nowrap sm:mt-5"
-                style={{ backgroundColor: 'var(--color-primary)' }}>
+                className="text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 whitespace-nowrap sm:mt-5 transition-all"
+                style={{ backgroundColor: 'var(--color-primary)' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                 {addingCast ? 'Adding...' : 'Add Cast'}
               </button>
             </div>
@@ -356,8 +362,10 @@ function AdminMovieForm() {
           {movieCreated && !isEditing && (
             <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
               <Link to="/admin/movies"
-                className="text-white px-6 py-2 rounded-lg text-sm inline-block"
-                style={{ backgroundColor: 'var(--color-surface-hover)' }}>
+                className="text-white px-6 py-2 rounded-lg text-sm inline-block transition-all"
+                style={{ backgroundColor: 'var(--color-surface-hover)' }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                 Done
               </Link>
             </div>

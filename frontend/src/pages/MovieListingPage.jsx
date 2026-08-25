@@ -399,7 +399,9 @@ function MovieListingPage() {
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
               className="p-2 rounded-lg transition-all disabled:opacity-30"
-              style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}>
+              style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--color-surface)'}>
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
@@ -409,7 +411,9 @@ function MovieListingPage() {
               onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
               className="p-2 rounded-lg transition-all disabled:opacity-30"
-              style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}>
+              style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--color-surface)'}>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
