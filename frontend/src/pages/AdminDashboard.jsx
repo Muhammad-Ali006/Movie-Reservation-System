@@ -103,8 +103,8 @@ function AdminDashboard() {
       </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map(stat => (
-          <div key={stat.label} className="rounded-lg p-5" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        {stats.map((stat, i) => (
+          <div key={stat.label} className="rounded-lg p-5 animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', animationDelay: `${i * 60}ms` }}>
             <div className="flex items-center gap-2 mb-3">
               <stat.icon className="w-5 h-5" style={{ color: stat.accent }} />
               <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>

@@ -340,7 +340,7 @@ function AdminReservationPage() {
       )}
 
       {selectedShowtimeId && (
-        <div className="rounded-lg p-6 mb-8" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-lg p-6 mb-8 animate-slide-down" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
             <div>
               <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
@@ -366,6 +366,8 @@ function AdminReservationPage() {
                   color: cancellingAll ? 'var(--color-text-muted)' : 'var(--color-error)',
                   cursor: cancellingAll ? 'not-allowed' : 'pointer',
                 }}
+                onMouseEnter={e => { if (!cancellingAll) e.currentTarget.style.opacity = '0.8' }}
+                onMouseLeave={e => { if (!cancellingAll) e.currentTarget.style.opacity = '1' }}
               >
                 {cancellingAll ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling...</>
@@ -475,14 +477,15 @@ function AdminReservationPage() {
 
       {!selectedShowtimeId && !loading && reservations.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {reservations.map(r => (
+          {reservations.map((r, i) => (
             <div
               key={r.id}
-              className="rounded-lg p-5 transition-all"
+              className="rounded-lg p-5 transition-all animate-fade-in"
               style={{
                 backgroundColor: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
                 opacity: r.status === 'CANCELLED' ? 0.6 : 1,
+                animationDelay: `${i * 60}ms`,
               }}
             >
               <div className="flex items-start justify-between mb-3">
@@ -535,6 +538,8 @@ function AdminReservationPage() {
                     border: '1px solid var(--color-border)',
                     cursor: cancellingId === r.id ? 'not-allowed' : 'pointer',
                   }}
+                  onMouseEnter={e => { if (cancellingId !== r.id) e.currentTarget.style.backgroundColor = 'var(--color-error-light)' }}
+                  onMouseLeave={e => { if (cancellingId !== r.id) e.currentTarget.style.backgroundColor = 'var(--color-surface)' }}
                 >
                   {cancellingId === r.id ? (
                     <><Loader2 className="w-3 h-3 animate-spin" /> Cancelling</>

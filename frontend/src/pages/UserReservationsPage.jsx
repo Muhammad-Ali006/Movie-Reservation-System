@@ -133,11 +133,11 @@ function UserReservationsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {reservations.map(res => {
+          {reservations.map((res, i) => {
             const st = STATUS_STYLES[res.status] || STATUS_STYLES.CANCELLED
             const canAct = res.status !== 'CANCELLED'
             return (
-              <div key={res.id} className="rounded-lg p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+              <div key={res.id} className="rounded-lg p-6 animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', animationDelay: `${i * 60}ms` }}>
                 <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
