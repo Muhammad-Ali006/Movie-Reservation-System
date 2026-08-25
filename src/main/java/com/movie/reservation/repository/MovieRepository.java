@@ -21,10 +21,12 @@ public class MovieRepository {
 
     private final RowMapper<Movie> movieRowMapper = (rs, rowNum) -> mapMovie(rs);
 
-    public List<Movie> findAllFiltered(Long genreId, String sortBy, String sortDir, String availability, int offset, int limit) {
+    public List<Movie> findAllFiltered(List<Long> genreIds, String sortBy, String sortDir, String availability, int offset, int limit) {
         StringBuilder sql = new StringBuilder("SELECT DISTINCT m.* FROM movies m");
 
-        if (genreId != null) {
+        boolean hasGenres = genreIds != null && !genreIds.isEmpty();
+
+        if (hasGenres) {
             sql.append(" INNER JOIN movie_genres mg ON m.id = mg.movie_id");
         }
 
@@ -35,9 +37,10 @@ public class MovieRepository {
             sql.append(" WHERE s_future.id IS NULL");
         }
 
-        if (genreId != null) {
+        if (hasGenres) {
+            String placeholders = genreIds.stream().map(g -> "?").reduce((a, b) -> a + "," + b).orElse("");
             sql.append(availability != null && "COMING_SOON".equals(availability) ? " AND" : " WHERE");
-            sql.append(" mg.genre_id = ?");
+            sql.append(" mg.genre_id IN (").append(placeholders).append(")");
         }
 
         String validSort = switch (sortBy != null ? sortBy : "createdAt") {
@@ -51,20 +54,22 @@ public class MovieRepository {
         sql.append(" ORDER BY ").append(validSort).append(" ").append(direction);
         sql.append(" LIMIT ? OFFSET ?");
 
-        Object[] params;
-        if (genreId != null) {
-            params = new Object[]{genreId, limit, offset};
-        } else {
-            params = new Object[]{limit, offset};
+        java.util.List<Object> params = new java.util.ArrayList<>();
+        if (hasGenres) {
+            params.addAll(genreIds);
         }
+        params.add(limit);
+        params.add(offset);
 
-        return jdbcTemplate.query(sql.toString(), movieRowMapper, params);
+        return jdbcTemplate.query(sql.toString(), movieRowMapper, params.toArray());
     }
 
-    public int countFiltered(Long genreId, String availability) {
+    public int countFiltered(List<Long> genreIds, String availability) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT m.id) FROM movies m");
 
-        if (genreId != null) {
+        boolean hasGenres = genreIds != null && !genreIds.isEmpty();
+
+        if (hasGenres) {
             sql.append(" INNER JOIN movie_genres mg ON m.id = mg.movie_id");
         }
 
@@ -75,13 +80,18 @@ public class MovieRepository {
             sql.append(" WHERE s_future.id IS NULL");
         }
 
-        if (genreId != null) {
+        if (hasGenres) {
+            String placeholders = genreIds.stream().map(g -> "?").reduce((a, b) -> a + "," + b).orElse("");
             sql.append(availability != null && "COMING_SOON".equals(availability) ? " AND" : " WHERE");
-            sql.append(" mg.genre_id = ?");
+            sql.append(" mg.genre_id IN (").append(placeholders).append(")");
         }
 
-        Object[] params = genreId != null ? new Object[]{genreId} : new Object[]{};
-        Integer count = jdbcTemplate.queryForObject(sql.toString(), Integer.class, params);
+        java.util.List<Object> params = new java.util.ArrayList<>();
+        if (hasGenres) {
+            params.addAll(genreIds);
+        }
+
+        Integer count = jdbcTemplate.queryForObject(sql.toString(), Integer.class, params.toArray());
         return count != null ? count : 0;
     }
 
