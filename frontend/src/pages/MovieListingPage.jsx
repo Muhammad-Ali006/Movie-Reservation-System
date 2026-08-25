@@ -119,6 +119,9 @@ function MovieListingPage() {
     setPage(0)
   }
 
+  const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
+  const isSearching = searchQuery.trim().length > 0
+
   const genreLabel = selectedGenreIds.length === 0
     ? 'All Genres'
     : selectedGenreIds.map(id => genreMap[id]).join(', ')
@@ -132,9 +135,6 @@ function MovieListingPage() {
     }
     setPage(0)
   }
-
-  const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
-  const isSearching = searchQuery.trim().length > 0
 
   return (
     <div className="relative min-h-screen">
