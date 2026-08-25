@@ -75,19 +75,19 @@ function Home() {
 
       <div className="max-w-7xl px-6 pt-20 relative md:ml-32 lg:ml-40">
         {/* Title */}
-        <h1 className="text-5xl md:text-6xl font-black tracking-wide mb-4 leading-none" style={{ color: 'var(--color-primary)' }}>
+        <h1 className="text-5xl md:text-6xl font-black tracking-wide mb-4 leading-none hero-stagger-1" style={{ color: 'var(--color-primary)' }}>
           CINEMAX
         </h1>
 
         {/* Typing tagline */}
-        <p className="text-2xl md:text-3xl font-semibold mb-8" style={{ color: 'var(--color-text)' }}>
+        <p className="text-2xl md:text-3xl font-semibold mb-8 hero-stagger-2" style={{ color: 'var(--color-text)' }}>
           {typed}
           <span className="typing-cursor"></span>
         </p>
 
         {/* CTA Buttons */}
         {!token && (
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 hero-stagger-3">
             <Link
               to="/movies"
               className="inline-flex items-center gap-2 text-white px-6 sm:px-8 py-3 rounded-lg font-bold text-base sm:text-lg transition-all hover:scale-105"
@@ -112,7 +112,7 @@ function Home() {
         {token && (
           <Link
             to="/movies"
-            className="inline-flex items-center gap-2 text-white px-6 sm:px-8 py-3 rounded-lg font-bold text-base sm:text-lg transition-all hover:scale-105"
+            className="inline-flex items-center gap-2 text-white px-6 sm:px-8 py-3 rounded-lg font-bold text-base sm:text-lg transition-all hover:scale-105 hero-stagger-3"
             style={{ backgroundColor: 'var(--color-primary)' }}
             onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)'}
             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}>

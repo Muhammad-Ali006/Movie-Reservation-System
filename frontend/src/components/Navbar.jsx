@@ -121,7 +121,7 @@ function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden px-4 pb-4 space-y-2" style={{ backgroundColor: 'rgba(10,10,10,0.98)' }}>
+        <div className="md:hidden px-4 pb-4 space-y-2 animate-slide-down" style={{ backgroundColor: 'rgba(10,10,10,0.98)' }}>
           {!isHome && (
             <Link to="/movies" onClick={closeMobile}
               className="flex items-center gap-2 py-2 text-sm font-medium"
