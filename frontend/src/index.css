@@ -297,6 +297,67 @@ button:active, a:active {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ===================================================
+   SLIDE DOWN ANIMATION (nav, banners, panels)
+   =================================================== */
+@keyframes slide-down {
+  from { opacity: 0; max-height: 0; transform: translateY(-8px); }
+  to   { opacity: 1; max-height: 500px; transform: translateY(0); }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.25s ease forwards;
+  overflow: hidden;
+}
+
+/* ===================================================
+   FADE IN UP ANIMATION (cards, forms, content views)
+   =================================================== */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in-up 0.35s ease both;
+}
+
+/* ===================================================
+   SCALE POP ANIMATION (success icons, QR code)
+   =================================================== */
+@keyframes scale-pop {
+  0%   { opacity: 0; transform: scale(0.5); }
+  70%  { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-pop {
+  animation: scale-pop 0.4s ease both;
+}
+
+/* ===================================================
+   STAGGERED HERO ENTRANCE
+   =================================================== */
+@keyframes hero-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-stagger-1 { animation: hero-slide-up 0.6s ease 0.1s both; }
+.hero-stagger-2 { animation: hero-slide-up 0.6s ease 0.3s both; }
+.hero-stagger-3 { animation: hero-slide-up 0.6s ease 0.5s both; }
+
+/* ===================================================
+   SPINNER
+   =================================================== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   button, a {
     transition: none;
@@ -306,7 +367,13 @@ button:active, a:active {
     transform: none;
   }
 
-  .page-transition {
+  .page-transition,
+  .animate-slide-down,
+  .animate-fade-in,
+  .animate-scale-pop,
+  .hero-stagger-1,
+  .hero-stagger-2,
+  .hero-stagger-3 {
     animation: none;
   }
 }
