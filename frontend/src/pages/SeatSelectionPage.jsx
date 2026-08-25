@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { ArrowLeft, ChevronRight, Loader2, Pencil, AlertCircle } from 'lucide-react'
 import api from '../utils/api'
@@ -16,25 +16,67 @@ function SeatSelectionPage() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [stolenSeats, setStolenSeats] = useState([])
 
   const initialized = useRef(false)
+  const selectedIdsRef = useRef(selectedIds)
+  selectedIdsRef.current = selectedIds
 
-  useEffect(() => {
+  const fetchSeats = useCallback(() => {
     const url = changeMode
       ? `/showtimes/${showtimeId}/seats?heldReservationId=${reservationId}`
       : `/showtimes/${showtimeId}/seats`
 
-    api.get(url)
-      .then(res => {
-        setSeats(res.data)
-        if (changeMode && !initialized.current) {
-          initialized.current = true
-          setSelectedIds(new Set(res.data.filter(s => s.heldByMe).map(s => s.id)))
+    return api.get(url).then(res => {
+      const newSeats = res.data
+      setSeats(newSeats)
+
+      const currentSelected = selectedIdsRef.current
+      if (currentSelected.size > 0) {
+        const stolen = []
+        const stillValid = new Set()
+        for (const seatId of currentSelected) {
+          const seat = newSeats.find(s => s.id === seatId)
+          if (seat && seat.status !== 'AVAILABLE' && !seat.heldByMe) {
+            stolen.push(seat)
+          } else if (seat) {
+            stillValid.add(seatId)
+          }
         }
-      })
-      .catch(() => setError('Failed to load seat layout'))
-      .finally(() => setLoading(false))
+        if (stolen.length > 0) {
+          setSelectedIds(stillValid)
+          setStolenSeats(prev => [...prev, ...stolen])
+        }
+      }
+
+      if (changeMode && !initialized.current) {
+        initialized.current = true
+        setSelectedIds(new Set(newSeats.filter(s => s.heldByMe).map(s => s.id)))
+      }
+
+      return res.data
+    })
   }, [showtimeId, changeMode, reservationId])
+
+  useEffect(() => {
+    fetchSeats()
+      .then(() => setLoading(false))
+      .catch(() => setError('Failed to load seat layout'))
+  }, [fetchSeats])
+
+  useEffect(() => {
+    if (loading || submitting) return
+    const interval = setInterval(() => {
+      fetchSeats().catch(() => {})
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [loading, submitting, fetchSeats])
+
+  useEffect(() => {
+    if (stolenSeats.length === 0) return
+    const timer = setTimeout(() => setStolenSeats([]), 5000)
+    return () => clearTimeout(timer)
+  }, [stolenSeats])
 
   const rows = seats.reduce((acc, seat) => {
     if (!acc[seat.rowLabel]) acc[seat.rowLabel] = []
@@ -174,6 +216,13 @@ function SeatSelectionPage() {
           <div className="flex items-center gap-2 p-3 rounded text-sm mb-4" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {submitError}
+          </div>
+        )}
+
+        {stolenSeats.length > 0 && (
+          <div className="flex items-center gap-2 p-3 rounded text-sm mb-4" style={{ backgroundColor: 'var(--color-error-light)', color: 'var(--color-error)' }}>
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {stolenSeats.map(s => `${s.rowLabel}${s.seatNumber}`).join(', ')} {stolenSeats.length > 1 ? 'were' : 'was'} taken by another user. Please select different seats.
           </div>
         )}
 
