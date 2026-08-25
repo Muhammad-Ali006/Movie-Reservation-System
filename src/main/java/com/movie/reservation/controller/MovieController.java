@@ -66,6 +66,9 @@ public class MovieController {
             map.put("createdAt", movie.getCreatedAt());
             map.put("genreIds", movieRepository.findGenreIdsByMovieId(movie.getId()));
             map.put("hasShowtimes", moviesWithShowtimes.contains(movie.getId()));
+            List<MovieCast> cast = movieCastRepository.findByMovieId(movie.getId());
+            List<String> actorNames = cast.stream().map(MovieCast::getActorName).toList();
+            map.put("actorNames", actorNames);
             return map;
         }).toList();
 
