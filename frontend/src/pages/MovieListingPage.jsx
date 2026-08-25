@@ -30,6 +30,7 @@ function MovieListingPage() {
   const [allMovies, setAllMovies] = useState([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [genreFilterOpen, setGenreFilterOpen] = useState(false)
+  const [gridKey, setGridKey] = useState(0)
 
   const fetchMovies = useCallback(async () => {
     setLoading(true)
@@ -106,6 +107,7 @@ function MovieListingPage() {
   const handleTabChange = (tab) => {
     setActiveTab(tab)
     setPage(0)
+    setGridKey(k => k + 1)
   }
 
   const handleGenreToggle = (genreId) => {
@@ -117,6 +119,7 @@ function MovieListingPage() {
       return next
     })
     setPage(0)
+    setGridKey(k => k + 1)
   }
 
   const genreMap = Object.fromEntries(genres.map(g => [g.id, g.name]))
@@ -134,6 +137,7 @@ function MovieListingPage() {
       setSortDir(newSort === 'title' ? 'asc' : 'desc')
     }
     setPage(0)
+    setGridKey(k => k + 1)
   }
 
   return (
@@ -272,7 +276,7 @@ function MovieListingPage() {
               <p className="text-sm mb-4 text-center" style={{ color: 'var(--color-text-muted)' }}>
                 Found {filteredMovies.length} movie{filteredMovies.length !== 1 ? 's' : ''} for "{searchQuery}"
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div key={gridKey} className="grid-transition grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredMovies.map((movie, index) => (
                   <Link
                     key={movie.id}
@@ -333,7 +337,7 @@ function MovieListingPage() {
                 : 'No movies found.'}
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div key={gridKey} className="grid-transition grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {movies.map(movie => (
               <Link
                 key={movie.id}
