@@ -244,16 +244,18 @@ function MovieListingPage() {
 
             {/* Expandable genre chips */}
             {genreFilterOpen && (
-              <div className="flex flex-wrap justify-center gap-2 max-w-3xl animate-slide-down">
-                {genres.map(g => (
+              <div className="flex flex-wrap justify-center gap-2 max-w-3xl animate-slide-down" style={{ animationDuration: '0.35s' }}>
+                {genres.map((g, i) => (
                   <button
                     key={g.id}
                     onClick={() => handleGenreToggle(g.id)}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-all"
-                    style={selectedGenreIds.includes(g.id)
-                      ? { backgroundColor: 'var(--color-primary)', color: '#fff' }
-                      : { backgroundColor: 'transparent', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }
-                    }>
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-all animate-fade-in"
+                    style={{
+                      ...(selectedGenreIds.includes(g.id)
+                        ? { backgroundColor: 'var(--color-primary)', color: '#fff' }
+                        : { backgroundColor: 'transparent', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }),
+                      animationDelay: `${i * 30}ms`,
+                    }}>
                     {g.name}
                     {selectedGenreIds.includes(g.id) && <X className="w-3 h-3 ml-1" />}
                   </button>
@@ -341,12 +343,12 @@ function MovieListingPage() {
           </p>
         ) : (
           <div key={gridKey} className="grid-transition grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {movies.map(movie => (
+            {movies.map((movie, index) => (
               <Link
                 key={movie.id}
                 to={`/movies/${movie.slug}`}
-                className="rounded-lg overflow-hidden transition-all relative"
-                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                className="search-result-card rounded-lg overflow-hidden transition-all relative"
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', animationDelay: `${index * 50}ms` }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--color-border-light)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                 <span
