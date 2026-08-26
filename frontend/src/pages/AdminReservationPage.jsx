@@ -102,8 +102,8 @@ function SearchableSelect({ items, value, onChange, placeholder, disabled }) {
                 onClick={() => handleSelect(it.id)}
                 className="w-full text-left px-4 py-2.5 text-sm transition-all"
                 style={{
-                  color: String(it.id) === String(value) ? 'var(--color-primary)' : 'var(--color-text)',
-                  backgroundColor: String(it.id) === String(value) ? 'rgba(229, 9, 20, 0.08)' : 'transparent',
+                  color: String(it.id) === String(value) ? 'var(--color-text)' : 'var(--color-text)',
+                  backgroundColor: String(it.id) === String(value) ? 'var(--color-surface-hover)' : 'transparent',
                   fontWeight: String(it.id) === String(value) ? 600 : 400,
                 }}
                 onMouseEnter={e => { if (String(it.id) !== String(value)) e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)' }}
@@ -440,7 +440,7 @@ function AdminReservationPage() {
       )}
 
       {selectedShowtimeId && (
-        <div className="rounded-lg p-6 mb-8 animate-slide-down" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-lg p-6 mb-8 animate-fade-in" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
           <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
             <div>
               <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text)' }}>
@@ -462,12 +462,12 @@ function AdminReservationPage() {
                 disabled={cancellingAll}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                 style={{
-                  backgroundColor: cancellingAll ? 'var(--color-border)' : 'var(--color-error-light)',
-                  color: cancellingAll ? 'var(--color-text-muted)' : 'var(--color-error)',
+                  backgroundColor: cancellingAll ? 'var(--color-border)' : 'var(--color-accent-light)',
+                  color: cancellingAll ? 'var(--color-text-muted)' : 'var(--color-accent)',
                   cursor: cancellingAll ? 'not-allowed' : 'pointer',
                 }}
-                onMouseEnter={e => { if (!cancellingAll) e.currentTarget.style.opacity = '0.8' }}
-                onMouseLeave={e => { if (!cancellingAll) e.currentTarget.style.opacity = '1' }}
+                onMouseEnter={e => { if (!cancellingAll) { e.currentTarget.style.backgroundColor = 'var(--color-accent)'; e.currentTarget.style.color = '#000' } }}
+                onMouseLeave={e => { if (!cancellingAll) { e.currentTarget.style.backgroundColor = 'var(--color-accent-light)'; e.currentTarget.style.color = 'var(--color-accent)' } }}
               >
                 {cancellingAll ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling...</>
@@ -534,7 +534,7 @@ function AdminReservationPage() {
                                 ? `${row}${seat.seatNumber} — Available`
                                 : `${row}${seat.seatNumber} — ${seat.status}${seat.username ? ` · ${seat.username}` : ''} (click to cancel)`}
                             >
-                              {cancellingId === seat.reservationId ? <Loader2 className="w-3.5 h-3.5 mx-auto animate-spin" /> : seat.seatNumber}
+                              {cancellingId != null && cancellingId === seat.reservationId ? <Loader2 className="w-3.5 h-3.5 mx-auto animate-spin" /> : seat.seatNumber}
                             </button>
                           )
                         })}
