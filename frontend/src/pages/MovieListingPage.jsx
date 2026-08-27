@@ -243,25 +243,30 @@ function MovieListingPage() {
             </div>
 
             {/* Expandable genre chips */}
-            {genreFilterOpen && (
-              <div className="flex flex-wrap justify-center gap-2 max-w-3xl animate-slide-down" style={{ animationDuration: '0.35s' }}>
-                {genres.map((g, i) => (
-                  <button
-                    key={g.id}
-                    onClick={() => handleGenreToggle(g.id)}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-all animate-fade-in"
-                    style={{
-                      ...(selectedGenreIds.includes(g.id)
-                        ? { backgroundColor: 'var(--color-primary)', color: '#fff' }
-                        : { backgroundColor: 'transparent', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }),
-                      animationDelay: `${i * 30}ms`,
-                    }}>
-                    {g.name}
-                    {selectedGenreIds.includes(g.id) && <X className="w-3 h-3 ml-1" />}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div
+              className="flex flex-wrap justify-center gap-2 max-w-3xl"
+              style={{
+                maxHeight: genreFilterOpen ? '200px' : '0',
+                opacity: genreFilterOpen ? 1 : 0,
+                overflow: 'hidden',
+                transition: 'max-height 0.35s ease, opacity 0.25s ease, margin 0.35s ease',
+                marginTop: genreFilterOpen ? '0' : '-0.5rem',
+              }}>
+              {genres.map((g, i) => (
+                <button
+                  key={g.id}
+                  onClick={() => handleGenreToggle(g.id)}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer transition-all"
+                  style={{
+                    ...(selectedGenreIds.includes(g.id)
+                      ? { backgroundColor: 'var(--color-primary)', color: '#fff' }
+                      : { backgroundColor: 'transparent', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }),
+                  }}>
+                  {g.name}
+                  {selectedGenreIds.includes(g.id) && <X className="w-3 h-3 ml-1" />}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
