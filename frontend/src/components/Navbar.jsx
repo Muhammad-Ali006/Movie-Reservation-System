@@ -121,48 +121,53 @@ function Navbar() {
 
       {/* Mobile menu */}
       <div
-        className="md:hidden"
+        className="md:hidden overflow-hidden"
         style={{
-          transform: mobileOpen ? 'translateY(0)' : 'translateY(-12px)',
+          maxHeight: mobileOpen ? '320px' : '0',
           opacity: mobileOpen ? 1 : 0,
-          visibility: mobileOpen ? 'visible' : 'hidden',
-          pointerEvents: mobileOpen ? 'auto' : 'none',
-          transition: 'transform 0.3s ease, opacity 0.3s ease, visibility 0.3s',
+          transition: 'max-height 0.35s ease, opacity 0.3s ease',
         }}
       >
-        <div className="px-4 pb-4 space-y-2" style={{ backgroundColor: 'rgba(10,10,10,0.98)' }}>
+        <div
+          className="px-4 pb-4 space-y-2"
+          style={{
+            backgroundColor: 'rgba(10,10,10,0.98)',
+            transform: mobileOpen ? 'translateY(0)' : 'translateY(-10px)',
+            transition: 'transform 0.3s ease',
+          }}
+        >
           {!isHome && (
             <Link to="/movies" onClick={closeMobile}
-              className="flex items-center gap-2 py-2 text-sm font-medium animate-fade-in"
-              style={{ color: 'var(--color-text-secondary)', animationDelay: '40ms' }}>
+              className="flex items-center gap-2 py-2 text-sm font-medium"
+              style={{ color: 'var(--color-text-secondary)' }}>
               <Film className="w-4 h-4" /> Movies
             </Link>
           )}
           {token ? (
             <>
-              <div className="py-2 text-sm animate-fade-in" style={{ color: 'var(--color-text-muted)', animationDelay: '80ms' }}>
+              <div className="py-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 Hello, {user?.username || 'User'}
               </div>
               <Link to="/my-bookings" onClick={closeMobile}
-                className="flex items-center gap-2 py-2 text-sm font-medium animate-fade-in"
-                style={{ color: 'var(--color-text-secondary)', animationDelay: '120ms' }}>
+                className="flex items-center gap-2 py-2 text-sm font-medium"
+                style={{ color: 'var(--color-text-secondary)' }}>
                 <CalendarCheck className="w-4 h-4" /> My Bookings
               </Link>
               <Link to="/account" onClick={closeMobile}
-                className="flex items-center gap-2 py-2 text-sm font-medium animate-fade-in"
-                style={{ color: 'var(--color-text-secondary)', animationDelay: '160ms' }}>
+                className="flex items-center gap-2 py-2 text-sm font-medium"
+                style={{ color: 'var(--color-text-secondary)' }}>
                 <UserCircle className="w-4 h-4" /> Account
               </Link>
               {user?.role === 'ADMIN' && (
                 <Link to="/admin" onClick={closeMobile}
-                  className="flex items-center gap-2 py-2 text-sm font-medium animate-fade-in"
-                  style={{ color: 'var(--color-text-secondary)', animationDelay: '200ms' }}>
+                  className="flex items-center gap-2 py-2 text-sm font-medium"
+                  style={{ color: 'var(--color-text-secondary)' }}>
                   <Shield className="w-4 h-4" /> Admin
                 </Link>
               )}
               <button onClick={handleLogout}
-                className="flex items-center gap-2 text-white px-4 py-2 rounded text-sm font-medium w-full text-left animate-fade-in"
-                style={{ backgroundColor: 'var(--color-primary)', animationDelay: '240ms' }}>
+                className="flex items-center gap-2 text-white px-4 py-2 rounded text-sm font-medium w-full text-left"
+                style={{ backgroundColor: 'var(--color-primary)' }}>
                 <LogOut className="w-4 h-4" /> Logout
               </button>
             </>
@@ -170,13 +175,13 @@ function Navbar() {
             !isHome && (
               <>
                 <Link to="/login" onClick={closeMobile}
-                  className="flex items-center gap-2 py-2 text-sm font-medium animate-fade-in"
-                  style={{ color: 'var(--color-text-secondary)', animationDelay: '80ms' }}>
+                  className="flex items-center gap-2 py-2 text-sm font-medium"
+                  style={{ color: 'var(--color-text-secondary)' }}>
                   <LogIn className="w-4 h-4" /> Login
                 </Link>
                 <Link to="/signup" onClick={closeMobile}
-                  className="flex items-center gap-2 text-white px-4 py-2 rounded text-sm font-medium animate-fade-in"
-                  style={{ backgroundColor: 'var(--color-primary)', animationDelay: '120ms' }}>
+                  className="flex items-center gap-2 text-white px-4 py-2 rounded text-sm font-medium"
+                  style={{ backgroundColor: 'var(--color-primary)' }}>
                   <UserPlus className="w-4 h-4" /> Sign Up
                 </Link>
               </>
