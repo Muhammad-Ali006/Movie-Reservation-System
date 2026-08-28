@@ -246,7 +246,7 @@ function MovieListingPage() {
             <div
               className="flex flex-wrap justify-center gap-2 max-w-3xl"
               style={{
-                maxHeight: genreFilterOpen ? '200px' : '0',
+                maxHeight: genreFilterOpen ? '500px' : '0',
                 opacity: genreFilterOpen ? 1 : 0,
                 overflow: 'hidden',
                 transition: 'max-height 0.35s ease, opacity 0.25s ease, margin 0.35s ease',

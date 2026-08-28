@@ -121,11 +121,13 @@ function Navbar() {
 
       {/* Mobile menu */}
       <div
-        className="md:hidden overflow-hidden"
+        className="md:hidden"
         style={{
-          maxHeight: mobileOpen ? '320px' : '0',
+          transform: mobileOpen ? 'translateY(0)' : 'translateY(-12px)',
           opacity: mobileOpen ? 1 : 0,
-          transition: 'max-height 0.35s ease, opacity 0.25s ease',
+          visibility: mobileOpen ? 'visible' : 'hidden',
+          pointerEvents: mobileOpen ? 'auto' : 'none',
+          transition: 'transform 0.3s ease, opacity 0.3s ease, visibility 0.3s',
         }}
       >
         <div className="px-4 pb-4 space-y-2" style={{ backgroundColor: 'rgba(10,10,10,0.98)' }}>
